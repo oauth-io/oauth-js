@@ -12,12 +12,12 @@ In your Javascript, add this line to initialize OAuth.js
 Usage
 =====
 
-To connect your user using facebook, 2 methods :
+To connect your user using facebook, 2 methods:
 
 Mode popup
 ----------
 
-``̀`js
+``̀`javascript
 //Using popup (option 1)
 OAuth.popup('facebook', function(err, result) {
   //handle error with err
@@ -28,7 +28,7 @@ OAuth.popup('facebook', function(err, result) {
 Mode redirection
 ----------------
 
-```js
+```javascript
 //Using redirection (option 2)
 OAuth.redirect('facebook', "callback/url");
 In callback url :
