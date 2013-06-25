@@ -29,18 +29,17 @@ Mode redirection
 ----------------
 
  ```javascript
- //Using redirection (option 2)
- OAuth.redirect('facebook', "callback/url");
+//Using redirection (option 2)
+OAuth.redirect('facebook', "callback/url");
  ```
 
 In callback url :
 
  ```javascript
- OAuth.callback('facebook', function(err, result) {
-   //handle error with err
-   //use result.access_token in your API request
- });
-
+OAuth.callback('facebook', function(err, result) {
+  //handle error with err
+  //use result.access_token in your API request
+});
  ```
 
 More information in [oauth.io documentation](http://oauth.io/#/docs)
