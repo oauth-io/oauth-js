@@ -18,11 +18,11 @@ Mode popup
 ----------
 
  ```javascript
- //Using popup (option 1)
- OAuth.popup('facebook', function(err, result) {
-   //handle error with err
-   //use result.access_token in your API request
- });
+//Using popup (option 1)
+OAuth.popup('facebook', function(err, result) {
+  //handle error with err
+  //use result.access_token in your API request
+});
  ```
 
 Mode redirection
