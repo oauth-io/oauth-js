@@ -17,7 +17,7 @@ To connect your user using facebook, 2 methods:
 Mode popup
 ----------
 
-``̀`javascript
+``̀`
 //Using popup (option 1)
 OAuth.popup('facebook', function(err, result) {
   //handle error with err
@@ -28,7 +28,7 @@ OAuth.popup('facebook', function(err, result) {
 Mode redirection
 ----------------
 
-```javascript
+```
 //Using redirection (option 2)
 OAuth.redirect('facebook', "callback/url");
 In callback url :
