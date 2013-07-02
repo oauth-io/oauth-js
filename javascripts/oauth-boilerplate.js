@@ -75,7 +75,7 @@ $(function()
 "yammer",
 "youtube"];
 
-  sample_providers = ["facebook", "twitter", "google", "github", "stackexchange", "soundcloud", "youtube", "tumblr", "instagram", "linkedin"];
+  sample_providers = ["facebook", "twitter", "github", "stackexchange", "soundcloud", "youtube", "tumblr", "instagram", "linkedin"];
   provider = sample_providers[0];
 	
 	$('#connectTo').html(provider);
