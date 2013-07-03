@@ -10,40 +10,50 @@
     <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
     <script src="javascripts/bootstrap.min.js"></script>
-    <script src="javascripts/oauth-boilerplate.js"></script>
     <script src="javascripts/oauth.js"></script>
 
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
+    <!-- Google Analytics -->
     <script type="text/javascript">
-      $(function()
-      {                      
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-42196684-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+
+
+    <!-- Boiletplate scripts (provider list / select event...) -->
+    <script src="javascripts/oauth-boilerplate.js"></script>
+    
+
+    <!-- Authorize using OAuth.io when click on 'Connexion' button -->
+    <script type="text/javascript">
+      $(function() {                      
         // Initialize OAuth with the public key
         OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');        
 
         $('#btConnect').click(function(e){
+          e.preventDefault();
 
-          e.preventDefault();        
-
-          //option = $('#provider_actions .btn-group .active').text();
-          
-          // provider : twitter, google, facebook...
-          OAuth.popup(provider, function(error, success){
-
-            if (success)
-            {
+          var oauthProvider = $('#connectTo').text().toLowerCase();
+          OAuth.popup(oauthProvider, function(error, success){
+            if (success) {
               $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));              
             }
-            else
-            {
-              $('#result').html("// Result <br /><br />" + error);              
+            else {
+              $('#result').html("// Result <br /><br />" + error);
             }
             $('#result').show();
-          }); 
-
-        });          
+          });
+        });
       });
     </script>
   </head>
@@ -61,7 +71,6 @@
 
         <div class="row" id="providers">          
         </div>
-
       </header>
       <section>
         <div class="row">
@@ -80,38 +89,28 @@
           </div>
           
           <div id="provider_actions" style="display:inline-block;"> 
-          <!--
-            <div class="btn-group" data-toggle="buttons-radio">
-              <button type="button" class="btn btn-primary active">Popup</button>        
-              <button type="button" class="btn btn-primary">Redirect</button>
-            </div> 
-          -->
-            <button class="btn btn-primary" type="button" id="btConnect">Connect to <span   id="connectTo" style="text-transform:capitalize;"></span></button>         
+            <button class="btn btn-primary" type="button" id="btConnect">Connect to <span id="connectTo" style="text-transform:capitalize;"></span></button>         
           </div>
         </div>        
 
         <div class="row">
-          <h4>How to use OAuth.io SDK ? it's really simple !</h4>
-          <pre id="code">
-            <code>
-// Initialize OAuth with your OAuth.io app public key
+          <h4>How to use OAuth.io SDK? it's really simple!</h4>
+          <pre id="code">// Initialize OAuth with your OAuth.io app public key
 OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');
 
-// provider : twitter, google, facebook...
+// provider: twitter, google, facebook...
 OAuth.popup('<span id='provider'>provider</span>', function(error, success){
   // See the result below
-});
-            </code>
-          </pre>          
+});</pre>          
 
           <pre id="result">            
           </pre>
         </div>
-
+        <div class="row">
+          <a href="https://github.com/oauth-io/oauth-js/tree/gh-pages">See the source of this page on Github</a>
+        </div>
       </section>
-
-
+    </div>
     <script src="javascripts/scale.fix.js"></script>
-    
   </body>
 </html>
