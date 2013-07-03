@@ -98,10 +98,8 @@
         <hr />
         <div class="row">
           <h4>How to use OAuth.io SDK? it's really simple!</h4>
-          <pre id="code">// Initialize OAuth with your OAuth.io app public key
-OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');
-
-// provider: twitter, google, facebook...
+          <p>After loading oauth.js, you can use <code>OAuth</code> object to authorize your user like this:</p>
+          <pre id="code">OAuth.initialize('<span class="text-success"><strong>Public key</strong></span>');
 OAuth.popup('<span id='provider'>provider</span>', function(error, success){
   // See the result below
 });</pre>
@@ -112,7 +110,7 @@ OAuth.popup('<span id='provider'>provider</span>', function(error, success){
         <div class="row">
           <a href="https://github.com/oauth-io/oauth-js/tree/gh-pages">See the source of this page on Github</a>
         </div>
-        
+
         <div class="row">
           <br /><p><strong>powered by <a href="https://oauth.io">OAuth.io</a> & <a href="http://webshell.io">Webshell</a></strong></p>
         </div>
