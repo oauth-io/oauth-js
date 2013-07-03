@@ -99,7 +99,8 @@
         <div class="row">
           <h4>How to use OAuth.io SDK? it's really simple!</h4>
           <p>After loading oauth.js, you can use <code>OAuth</code> object to authorize your user like this:</p>
-          <pre id="code">OAuth.initialize('<span class="text-success"><strong>Public key</strong></span>');
+          <pre id="code">// Initialize with your OAuth.io app public key
+OAuth.initialize('<span class="text-success"><strong>Public key</strong></span>');
 OAuth.popup('<span id='provider'>provider</span>', function(error, success){
   // See the result below
 });</pre>
