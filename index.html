@@ -91,8 +91,11 @@
           <div id="provider_actions" style="display:inline-block;"> 
             <button class="btn btn-primary" type="button" id="btConnect">Connect to <span id="connectTo" style="text-transform:capitalize;"></span></button>         
           </div>
-        </div>        
-
+        </div>
+        <div class="row">
+          <p><strong>It's just a boilerplate, we don't save any information about you!</strong></p>
+        </div>
+        <hr />
         <div class="row">
           <h4>How to use OAuth.io SDK? it's really simple!</h4>
           <pre id="code">// Initialize OAuth with your OAuth.io app public key
@@ -101,7 +104,7 @@ OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');
 // provider: twitter, google, facebook...
 OAuth.popup('<span id='provider'>provider</span>', function(error, success){
   // See the result below
-});</pre>          
+});</pre>
 
           <pre id="result">            
           </pre>
