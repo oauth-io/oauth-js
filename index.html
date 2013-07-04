@@ -36,23 +36,54 @@
 
     <!-- Authorize using OAuth.io when click on 'Connexion' button -->
     <script type="text/javascript">
-      $(function() {                      
+      $(function() {   
+
+        // Callback for redirect method
+        OAuth.callback(function (error, success)
+        {          
+          if (error)
+          {
+            $('#result').html("// Result <br /><br />" + error);
+          }
+          else
+          {                               
+            $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));      
+          }
+          
+          $('#popup_method').removeClass('active');
+          $('#redirect_method').addClass('active');
+          $('#provider_actions .btn-group .active').trigger('click');
+          $('.provider').html(success.provider);
+          $('#result').show();          
+        });
+
+
         // Initialize OAuth with the public key
         OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');        
 
         $('#btConnect').click(function(e){
           e.preventDefault();
 
+          var oauthMethod = $('#provider_actions .btn-group .active').text();          
           var oauthProvider = $('#connectTo').text().toLowerCase();
-          OAuth.popup(oauthProvider, function(error, success){
-            if (success) {
-              $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));              
-            }
-            else {
-              $('#result').html("// Result <br /><br />" + error);
-            }
-            $('#result').show();
-          });
+
+          if (oauthMethod == 'Popup')
+          {
+            OAuth.popup(oauthProvider, function(error, success){
+              if (success) {
+                $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));              
+              }
+              else {
+                $('#result').html("// Result <br /><br />" + error);
+              }
+              $('#result').show();
+            });
+          }
+          else
+          {
+            OAuth.redirect(oauthProvider, 'http://oauth.local:4000');
+          }
+
         });
       });
     </script>
@@ -89,6 +120,10 @@
           </div>
           
           <div id="provider_actions" style="display:inline-block;"> 
+            <div class="btn-group" data-toggle="buttons-radio">
+              <button type="button" class="btn btn-default active" id="popup_method">Popup</button>
+              <button type="button" class="btn btn-default" id="redirect_method">Redirect</button>              
+            </div>
             <button class="btn btn-primary" type="button" id="btConnect">Connect to <span id="connectTo" style="text-transform:capitalize;"></span></button>         
           </div>
         </div>
@@ -101,7 +136,7 @@
           <p>After loading oauth.js, you can use <code>OAuth</code> object to authorize your user like this:</p>
           <pre id="code">// Initialize with your OAuth.io app public key
 OAuth.initialize('<span class="text-success"><strong>Public key</strong></span>');
-OAuth.popup('<span id='provider'>provider</span>', function(error, success){
+OAuth.popup('<span class='provider'>provider</span>', function(error, success){
   // See the result below
 });</pre>
 

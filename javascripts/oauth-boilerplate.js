@@ -79,7 +79,7 @@ $(function() {
   var sample_providers = ["facebook", "twitter", "github", "stackexchange", "soundcloud", "youtube", "tumblr", "instagram", "linkedin"];
   var provider = sample_providers[0];
 	
-	$('#connectTo').html(provider);
+    $('#connectTo').html(provider);
   $("#provider_actions, #result").hide();
   
   var provider_actions = $('#provider_actions').hide();
@@ -105,17 +105,43 @@ $(function() {
 
   $('#providers-menu li').click(function(e) {              
     e.preventDefault();
+     $("#result").hide();
     if (!provider_actions.is(':visible'))
       provider_actions.fadeIn();
-    
+
     provider = $(this).find('a').text();
     $('#connectTo').html(provider);
-    $('#provider').html(provider);  
+    $('.provider').html(provider);  
   });
 
   $('#provider_actions .btn-group button').click(function(e) {       
-    $("#result").hide();
-    $('#provider').html(provider);
+    $("#result").hide();    
     update_code($(this).text(), provider);
   });
+
+  function update_code(option, provider)
+  {
+    var popup_code = "// Initialize with your OAuth.io app public key<br />" +
+"OAuth.initialize('<b>Public key</b>');<br />" +
+"OAuth.popup('<span class='provider'>" + provider + "</span>', function(error, success){<br />" +
+"  // See the result below<br />" +
+"});";
+
+    var redirect_code = "// Initialize with your OAuth.io app public key<br />" +
+"OAuth.initialize('<b>Public key</b>');<br />" +
+"// callback_url is the URL where users are redirected <br />" +
+"// after being authorized<br />" + 
+"OAuth.redirect('<span class='provider'>" + provider + "</span>', 'callback_url');<br /><br />" + 
+"// In callback URL<br />" + 
+"OAuth.callback('<span class='provider'>" + provider + "</span>', (error, success) { <br />" + 
+"  // See the result below<br />" +
+"});";
+
+    if (option == 'Popup')
+        $('#code').html(popup_code);
+    else
+        $('#code').html(redirect_code);
+
+  }
+
 });
