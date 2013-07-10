@@ -16,20 +16,6 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <!-- Google Analytics -->
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-42196684-1']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
-
-
     <!-- Boiletplate scripts (provider list / select event...) -->
     <script src="javascripts/oauth-boilerplate.js"></script>
     
@@ -43,7 +29,7 @@
         {          
           if (error)
           {
-            $('#result').html("// Result <br /><br />" + error);
+            $('#result').html("// Result error <br /><br />" + error);
           }
           else
           {                               
@@ -59,7 +45,10 @@
 
 
         // Initialize OAuth with the public key
-        OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');        
+        // OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');        
+           //OAuth.initialize('dWP7MGuPS9mSWGr-5RifNZA7D2Y');        
+         //github-createrepo
+		 OAuth.initialize('aBtmWfXi6lv-9Bf9TsykOiH80eo');        
 
         $('#btConnect').click(function(e){
           e.preventDefault();
@@ -71,10 +60,34 @@
           {
             OAuth.popup(oauthProvider, function(error, success){
               if (success) {
-                $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));              
+							alert('url is ' + 'https://api.github.com/user/repos?access_token=' + success.access_token);
+					$.ajax
+					({
+							type: "POST",
+							//the url where you want to sent the userName and password to
+							url: 'https://api.github.com/user/repos?access_token=' + success.access_token,
+							dataType: 'json',
+							async: false,
+							//json object to sent to the authentication url
+							data : '{ "name": "hello-world"}',	
+					
+								/*	data: '{
+							  "name": "Hello-World",
+							  "description": "This is your first repo",
+							  "homepage": "https://github.com",
+							  "private": false,
+							  "has_issues": true,
+							  "has_wiki": true,
+							  "has_downloads": true
+								  }',*/
+							success: function () {
+								alert("Thanks!"); 
+							}
+						});
+                $('#result').html("// Result success <br /><br />" + JSON.stringify(success, undefined, 2));              
               }
               else {
-                $('#result').html("// Result <br /><br />" + error);
+                $('#result').html("// Result error <br /><br />" + error);
               }
               $('#result').show();
             });
