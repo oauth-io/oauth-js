@@ -42,4 +42,9 @@ OAuth.callback('facebook', function(err, result) {
 });
  ```
 
+Examples
+========
+
+* [GitHub create and delete repositories](https://github.com/pcoder/oauth-js/tree/gh-pages): This example ([github-create-delete-repo.html](https://github.com/pcoder/oauth-js/blob/gh-pages/github-create-delete-repo.html)) shows how oauth.io can be used to create/delete repositories from a user's GitHub account.
+
 More information in [oauth.io documentation](http://oauth.io/#/docs)
