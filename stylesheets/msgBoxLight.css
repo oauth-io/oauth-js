@@ -13,7 +13,7 @@
     -moz-box-shadow: 0px 0px 11px #000000;
     -webkit-box-shadow: 0px 0px 11px #000000;
     box-shadow: 0px 0px 11px #000000;
-    background-image: url('../Images/msgBoxBackGround.png');
+    background-image: url('../images/msgBoxBackGround.png');
 }
 div.msgBoxBackGround
 {

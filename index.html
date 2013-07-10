@@ -4,18 +4,31 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>Using Oauth.io with GitHub</title>    
+    <title>Oauth.io</title>    
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
     <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
     <script src="javascripts/bootstrap.min.js"></script>
     <script src="javascripts/oauth.js"></script>
-	<script src="javascripts/jquery.msgBox.js" type="text/javascript"></script>
-	<link href="stylesheets/msgBoxLight.css" rel="stylesheet" type="text/css">
+
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-42196684-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+
 
     <!-- Boiletplate scripts (provider list / select event...) -->
     <script src="javascripts/oauth-boilerplate.js"></script>
@@ -30,13 +43,15 @@
         {          
           if (error)
           {
-            $('#result').html("// Result error <br /><br />" + error);
+            $('#result').html("// Result <br /><br />" + error);
           }
           else
           {                               
             $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));      
           }
           
+          $('#popup_method').removeClass('active');
+          $('#redirect_method').addClass('active');
           $('#provider_actions .btn-group .active').trigger('click');
           $('.provider').html(success.provider);
           $('#result').show();          
@@ -44,166 +59,98 @@
 
 
         // Initialize OAuth with the public key
-        // github-createrepo public key 
-		 OAuth.initialize('aBtmWfXi6lv-9Bf9TsykOiH80eo');        
-
-		 $('#btConnect_del').click(function(e){
-				 e.preventDefault();
-
-		  var repo_name = $('#text_repo_name_del').val();
-		  var user_name = '';
-          
-		  // the possible values for oauthMethod are 'Popup' & 'Redirect'
-          var oauthMethod = 'Popup';          
-          
-          // the possible values for oauthProvider are 'github', 'facebook', .... etc. All in lowercase!
-          var oauthProvider = 'github';
-
-   
-		 $.msgBox({
-				title: "Are You Sure",
-				content: "Are you sure you want to delete " +repo_name+ "? This is an irreversible action and ALL THE CONTENTS OF "+ repo_name+ " **WILL** BE LOST.",
-				type: "confirm",
-				buttons: [{ value: "Yes" }, { value: "No" }, { value: "Cancel"}],
-				success: function (result) {
-					if (result == "Yes") {
-					   // get the user's username :user
-					  OAuth.popup(oauthProvider, function(err, suc){
-							  if (suc) {
-								$.ajax
-									({
-											type: "GET",
-											//the url where you want to sent the userName and password to
-											url: 'https://api.github.com/user?access_token=' + suc.access_token,
-											dataType: 'json',
-											async: false,
-											success: function (data) {
-												var json = $.parseJSON(data); 
-												user_name = json.login;
-											},
-											error: function(req, status, er) {
-												alert("ERROR: "+ req.responseText); 
-											}
-									});
-								$('#result').html("// Result success <br /><br />" + JSON.stringify(suc, undefined, 2));              
-							  }
-							  else {
-								$('#result').html("// Result error <br /><br />" + err);
-							  }
-							  $('#result').show();
-							});
-
-					   // delete the user's repository 
-					   OAuth.popup(oauthProvider, function(error, success){
-							  if (success) {
-									$.ajax
-									({
-											type: "DELETE",
-											//the url where you want to sent the userName and password to
-											url: 'https://api.github.com/repos/' + user_name +'/' +repo_name+ '?access_token=' + success.access_token,
-											dataType: 'json',
-											async: false,
-											success: function () {
-												alert("Repository '"+ repo_name + "' deleted on GitHub.com!"); 
-											},
-											error: function(request, status, error) {
-												alert("ERROR: "+ request.responseText); 
-											}
-										});
-								$('#result').html("// Result success <br /><br />" + JSON.stringify(success, undefined, 2));              
-							  }
-							  else {
-								$('#result').html("// Result error <br /><br />" + error);
-							  }
-							  $('#result').show();
-							});
-					}
-				}
-		});
-		});
+        OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');        
 
         $('#btConnect').click(function(e){
           e.preventDefault();
 
-		  var repo_name = $('#text_repo_name').val();
-          // the possible values for oauthMethod are 'Popup' & 'Redirect'
-          var oauthMethod = 'Popup';          
-          
-          // the possible values for oauthProvider are 'github', 'facebook', .... etc. All in lowercase!
-          var oauthProvider = 'github';
+          var oauthMethod = $('#provider_actions .btn-group .active').text();          
+          var oauthProvider = $('#connectTo').text().toLowerCase();
 
+          if (oauthMethod == 'Popup')
+          {
             OAuth.popup(oauthProvider, function(error, success){
               if (success) {
-					$.ajax
-					({
-							type: "POST",
-							//the url where you want to sent the userName and password to
-							url: 'https://api.github.com/user/repos?access_token=' + success.access_token,
-							dataType: 'json',
-							async: false,
-							//json object to sent to the authentication url
-							data : '{ "name": "' + repo_name + '", "description": "This is a hello world repo created using an oauth.io application"}',	
-							success: function () {
-								alert("Repository '"+ repo_name + "' created successfully on GitHub.com!"); 
-							},
-							error: function(request, status, error) {
-								alert("ERROR: "+ request.responseText); 
-							}
-						});
-                $('#result').html("// Result success <br /><br />" + JSON.stringify(success, undefined, 2));              
+                $('#result').html("// Result <br /><br />" + JSON.stringify(success, undefined, 2));              
               }
               else {
-                $('#result').html("// Result error <br /><br />" + error);
+                $('#result').html("// Result <br /><br />" + error);
               }
               $('#result').show();
             });
+          }
+          else
+          {
+            OAuth.redirect(oauthProvider, 'http://oauth-io.github.io/oauth-js');
+          }
+
         });
       });
     </script>
   </head>
   <body>
     <div class="wrapper">
-     <section>
+      <header>
         <div class="row">
-          <h3>
-            <a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Create a GitHub repo using oauth.io
-          </h3>
+          <img src="http://oauth-io.github.io/oauth-js/images/logo_v1.png" width="110"/>
+          <p class="view"><a href="https://oauth.io">Visit the website</a></p>
         </div>
-        <div class="row">
-          <div id="provider_action" style="display:inline-block;"> 
-            <div>
-              Repository Name: <input type="text" class="active" id="text_repo_name"/>
-            </div>
-            <button class="btn btn-primary" type="button" id="btConnect">Create GitHub repo</button>         
-          </div>
-        </div>
-        <hr />
-        <div class="row">
-          <pre id="result">            
-          </pre>
-        </div>
-      </section>
-     <section>
-        <div class="row">
-          <h3>
-            <a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Delete a GitHub repo using oauth.io
-          </h3>
-        </div>
-        <div class="row">
-          <div id="provider_action_del" style="display:inline-block;"> 
-            <div>
-              Repository Name: <input type="text" class="active" id="text_repo_name_del"/>
-            </div>
-            <button class="btn btn-primary" type="button" id="btConnect_del">Delete a GitHub repo</button>         
-          </div>
-        </div>
-        <hr />
-        <div class="row">
-          <pre id="result">            
-          </pre>
-        </div>
-      </section>
 
+        <div class="row">
+          <span>APIs supported</span>
+        </div>
+
+        <div class="row" id="providers">          
+        </div>
+      </header>
+      <section>
+        <div class="row">
+          <h3>
+            <a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Serverless OAuth is now possible
+          </h3>
+        </div>
+        <div class="row">
+          <div class="btn-group">
+            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+              Select a provider
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" id="providers-menu">              
+            </ul>
+          </div>
+          
+          <div id="provider_actions" style="display:inline-block;"> 
+            <div class="btn-group" data-toggle="buttons-radio">
+              <button type="button" class="btn btn-default active" id="popup_method">Popup</button>
+              <button type="button" class="btn btn-default" id="redirect_method">Redirect</button>              
+            </div>
+            <button class="btn btn-primary" type="button" id="btConnect">Connect to <span id="connectTo" style="text-transform:capitalize;"></span></button>         
+          </div>
+        </div>
+        <div class="row">
+          <br /><p>It's just a boilerplate, we don't save any information on you!</p>
+        </div>
+        <hr />
+        <div class="row">
+          <h4>How to use OAuth.io SDK? it's really simple!</h4>
+          <p>After loading oauth.js, you can use <code>OAuth</code> object to authorize your user like this:</p>
+          <pre id="code">// Initialize with your OAuth.io app public key
+OAuth.initialize('<span class="text-success"><strong>Public key</strong></span>');
+OAuth.popup('<span class='provider'>provider</span>', function(error, success){
+  // See the result below
+});</pre>
+
+          <pre id="result">            
+          </pre>
+        </div>
+        <div class="row">
+          <a href="https://github.com/oauth-io/oauth-js/tree/gh-pages">See the source of this page on Github</a>
+        </div>
+
+        <div class="row">
+          <br /><p><strong>powered by <a href="https://oauth.io">OAuth.io</a> & <a href="http://webshell.io">Webshell</a></strong></p>
+        </div>
+      </section>
     </div>
     <script src="javascripts/scale.fix.js"></script>
   </body>

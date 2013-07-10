@@ -93,7 +93,7 @@ function msg (options) {
 
     var divBackGround = "<div class=\"msgBoxBackGround\"></div>"
     var divTitle = "<div class=\"msgBoxTitle\">" + options.title + "</div>";
-    var divContainer = "<div class=\"msgBoxContainer\"><div class=\"msgBoxImage\"><img src=\"Images/" + image + "\"/></div><div class=\"msgBoxContent\"><p><span>" + options.content + "</span></p></div></div>";
+    var divContainer = "<div class=\"msgBoxContainer\"><div class=\"msgBoxImage\"><img src=\"images/" + image + "\"/></div><div class=\"msgBoxContent\"><p><span>" + options.content + "</span></p></div></div>";
     var divButtons = "<div class=\"msgBoxButtons\">" + buttons + "</div>";
     var divInputs = "<div class=\"msgBoxInputs\">" + inputs + "</div>";
 
