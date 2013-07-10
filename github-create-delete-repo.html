@@ -78,8 +78,9 @@
 											dataType: 'json',
 											async: false,
 											success: function (data) {
-												var json = $.parseJSON(data); 
+												var json = $.parseJSON(JSON.stringify(data, undefined, 2)); 
 												user_name = json.login;
+												//alert('Username is ' + user_name);
 											},
 											error: function(req, status, er) {
 												alert("ERROR: "+ req.responseText); 
@@ -92,7 +93,10 @@
 							  }
 							  $('#result').show();
 							});
-
+                       /*if(user_name == ''){
+					   		alert('No associated username could be found');
+							return;
+					   }*/
 					   // delete the user's repository 
 					   OAuth.popup(oauthProvider, function(error, success){
 							  if (success) {
