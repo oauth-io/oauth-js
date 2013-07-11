@@ -1,7 +1,7 @@
 (function() {
 	"use strict";
 	var config = {
-		oauthd_url: '{{auth_url}}'
+		oauthd_url: 'https://oauth.io/auth'
 	};
 
 	config.oauthd_base = getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
