@@ -4,27 +4,6 @@ $(function() {
 	var sample_providers = ["facebook", "twitter", "github", "stackexchange", "soundcloud", "youtube", "tumblr", "instagram", "linkedin"];
 	var provider = sample_providers[0];
 
-
-	$.each(providers, function(index, value) {
-		var srcImg = "https://oauth.io//auth/api/providers/" + value + "/logo";
-		var providers_container;
-
-		if (index % 15 == 0)
-			$('#providers').append("<div class='row'></div>");
-
-		value = value.replace(/_/g, ' ')
-		$('#providers').append("<img data-toggle='tooltip' title data-original-title='" + value + "' style='margin: 4px;' src='" + srcImg + "' width='28'/>");
-	});
-
-	$('#providers img').tooltip();
-	$('#result').hide();
-
-	$('#provider_actions .btn-group button').click(function(e) {
-		$("#result").hide();
-		$('#placeholder-result').show();
-		$('#success-text, #error-text').hide();
-		update_code($(this).text(), provider);
-	});
 	function update_code(option, provider) {
 		var popup_code = "// Initialize with your OAuth.io app public key\n" +
 			"OAuth.initialize('<b>Public key</b>');\n" +
@@ -99,4 +78,26 @@ $(function() {
 			OAuth.redirect(oauthProvider, 'http://oauth-io.github.io/oauth-js');
 		}
     });
+
+    //add provider list after the demonstration
+	$.each(providers, function(index, value) {
+		var srcImg = "https://oauth.io//auth/api/providers/" + value + "/logo";
+		var providers_container;
+
+		if (index % 15 == 0)
+			$('#providers').append("<div class='row'></div>");
+
+		value = value.replace(/_/g, ' ')
+		$('#providers').append("<img data-toggle='tooltip' title data-original-title='" + value + "' style='margin: 4px;' src='" + srcImg + "' width='28'/>");
+	});
+
+	$('#providers img').tooltip();
+	$('#result').hide();
+
+	$('#provider_actions .btn-group button').click(function(e) {
+		$("#result").hide();
+		$('#placeholder-result').show();
+		$('#success-text, #error-text').hide();
+		update_code($(this).text(), provider);
+	});
 });
