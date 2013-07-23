@@ -5,20 +5,20 @@ $(function() {
 	var provider = sample_providers[0];
 
 	function update_code(option, provider) {
-		var popup_code = "// Initialize with your OAuth.io app public key\n" +
-			"OAuth.initialize('<b>Public key</b>');\n" +
-			"OAuth.popup('<span class='provider'>" + provider + "</span>', function(error, success){\n" +
-			"  // See the result below\n" +
+		var popup_code = "<span style=\"color: #777\">// Initialize with your OAuth.io app public key</span>\n" +
+			"OAuth.initialize('<strong>Public key</strong>');\n" +
+			"OAuth.popup('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', function(<span style=\"color: red; font-weight: bold\">error</span>, <span style=\"color: orange; font-weight: bold\">success</span>){\n" +
+			"  <span style=\"color: #777\">// See the result below</span>\n" +
 			"});\n\n\n\n\n ";
 
-		var redirect_code = "// Initialize with your OAuth.io app public key\n" +
-			"OAuth.initialize('<b>Public key</b>');\n" +
-			"// callback_url is the URL where users are redirected \n" +
-			"// after being authorized\n" +
-			"OAuth.redirect('<span class=\"provider\">" + provider + "</span>', 'callback_url');\n\n" +
-			"// In callback URL\n" +
-			"OAuth.callback('<span class=\"provider\">" + provider + "</span>', (error, success) { \n" +
-			"  // See the result below\n" +
+		var redirect_code = "<span style=\"color: #777\">// Initialize with your OAuth.io app public key</span>\n" +
+			"OAuth.initialize('<span class=\"text-success\"><strong>Public key</strong></span>');\n" +
+			"<span style=\"color: #777\">// callback_url is the URL where users are redirected</span>\n" +
+			"<span style=\"color: #777\">// after being authorized</span>\n" +
+			"OAuth.redirect('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', '<strong>callback_url</strong>');\n\n" +
+			"<span style=\"color: #777\">// In callback URL</span>\n" +
+			"OAuth.callback('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', (<span style=\"color: red; font-weight: bold\">error</span>, <span style=\"color: orange; font-weight: bold\">success</span>) { \n" +
+			"  <span style=\"color: #777\">// See the result below</span>\n" +
 			"});";
 
 		if (option == 'Popup')
@@ -47,11 +47,12 @@ $(function() {
     // Initialize OAuth with the public key
     OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');
 
+    var oauthProvider = 'facebook'
     $('#oauth-connect button').click(function(e) {
 		e.preventDefault();
 
 		var oauthMethod = $('#provider_actions .btn-group .active').text();
-		var oauthProvider = $(this).attr('data-provider')
+		oauthProvider = $(this).attr('data-provider')
 
 		//display the code sample code in the <pre>
 		update_code(oauthMethod, oauthProvider);
@@ -78,6 +79,12 @@ $(function() {
 			OAuth.redirect(oauthProvider, 'http://oauth-io.github.io/oauth-js');
 		}
     });
+
+    $('#oauth-connect button').mouseenter(function() {
+    	$('.provider:not(.stay)').html($(this).attr('data-provider'))
+    }).mouseleave(function() {
+    	$('.provider:not(.stay)').html(oauthProvider)
+    })
 
     //add provider list after the demonstration
 	$.each(providers, function(index, value) {
