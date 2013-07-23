@@ -28,18 +28,22 @@ $(function() {
 		    $('#code').html(redirect_code);
 	}
 
+    var oauthProvider = 'facebook'
+
 	// Callback for redirect method
     OAuth.callback(function (error, success) {
 		if (error) {
+			oauthProvider = "the provider"
 			$('#error-text').show().find('span').html(oauthProvider);
 		}
 		else {
+			oauthProvider = success.provider
 			$('#success-text').show().find('span').html(oauthProvider)
 		}
 		$('#result').html("success = " + JSON.stringify(success, undefined, 2) + "\n\nerror = " + JSON.stringify(error, undefined, 2)).show();
 		$('#popup_method').removeClass('active');
 		$('#redirect_method').addClass('active');
-		update_code('Redirect', "facebook");
+		update_code('Redirect', oauthProvider);
 		$('#placeholder-result').hide();
 		$('.provider').html(success.provider);
     });
@@ -48,7 +52,6 @@ $(function() {
     // Initialize OAuth with the public key
     OAuth.initialize('qb24rqcWu7g5eAUJ2IU6px8WkYE');
 
-    var oauthProvider = 'facebook'
     $('#oauth-connect button').click(function(e) {
 		e.preventDefault();
 
@@ -75,8 +78,8 @@ $(function() {
 			});
 		}
 		else {
-			//we authorize user using the redirect mode "http://oauth-io.github.io/oauth-js"
-			OAuth.redirect(oauthProvider, "http://localhost:4000");
+			//we authorize user using the redirect mode
+			OAuth.redirect(oauthProvider, "http://oauth-io.github.io/oauth-js");
 		}
     });
 
