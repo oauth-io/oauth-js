@@ -1,6 +1,7 @@
 $(function() {
-	var providers = ["soundcloud","orkut","google_groups","google_play","ohloh","bitly","google_audit","google_urlshortener","google_apps","instagram","youtube","google_enterprise_licence_manager","linkedin","wordpress","live","google_bigquery","disqus","dailymotion","vk","500px","miso","twitter","google_cloud","dailymile","google_analytics","fitbit","google_blogger","23andme","google_latitude","google_adexchange","imgur","google_prediction","eventbrite","vimeo","trello","google_site","google_calendar","yammer","box","runkeeper","github","google_plus","behance","flickr","google_affiliate_network","google_documents","stackexchange","bitbucket","meetup","foursquare","assembla","google_fusiontables","skyrock","google","google_maps","google_shopping","deezer","google_drive","facebook","google_adsense","freebase","google_contact","google_books","mailchimp","cheddar","google_dfareporting","plurk","tumblr","google_tasks","deviantart","dropbox","tripit"]
+	$('#result').hide();
 
+	var providers = ["soundcloud","orkut","google_groups","google_play","ohloh","bitly","google_audit","google_urlshortener","google_apps","instagram","youtube","google_enterprise_licence_manager","linkedin","wordpress","live","google_bigquery","disqus","dailymotion","vk","500px","miso","twitter","google_cloud","dailymile","google_analytics","fitbit","google_blogger","23andme","google_latitude","google_adexchange","imgur","google_prediction","eventbrite","vimeo","trello","google_site","google_calendar","yammer","box","runkeeper","github","google_plus","behance","flickr","google_affiliate_network","google_documents","stackexchange","bitbucket","meetup","foursquare","assembla","google_fusiontables","skyrock","google","google_maps","google_shopping","deezer","google_drive","facebook","google_adsense","freebase","google_contact","google_books","mailchimp","cheddar","google_dfareporting","plurk","tumblr","google_tasks","deviantart","dropbox","tripit"]
 	var sample_providers = ["facebook", "twitter", "github", "stackexchange", "soundcloud", "youtube", "tumblr", "instagram", "linkedin"];
 	var provider = sample_providers[0];
 
@@ -30,17 +31,17 @@ $(function() {
 	// Callback for redirect method
     OAuth.callback(function (error, success) {
 		if (error) {
-			$('#result').html(JSON.stringify(error, undefined, 2));
+			$('#error-text').show().find('span').html(oauthProvider);
 		}
 		else {
-			$('#result').html(JSON.stringify(success, undefined, 2));
+			$('#success-text').show().find('span').html(oauthProvider)
 		}
-
+		$('#result').html("success = " + JSON.stringify(success, undefined, 2) + "\n\nerror = " + JSON.stringify(error, undefined, 2)).show();
 		$('#popup_method').removeClass('active');
 		$('#redirect_method').addClass('active');
-		$('#provider_actions .btn-group .active').trigger('click');
+		update_code('Redirect', "facebook");
+		$('#placeholder-result').hide();
 		$('.provider').html(success.provider);
-		$('#result').show();
     });
 
 
@@ -74,8 +75,8 @@ $(function() {
 			});
 		}
 		else {
-			//we authorize user using the redirect mode
-			OAuth.redirect(oauthProvider, 'http://oauth-io.github.io/oauth-js');
+			//we authorize user using the redirect mode "http://oauth-io.github.io/oauth-js"
+			OAuth.redirect(oauthProvider, "http://localhost:4000");
 		}
     });
 
@@ -98,8 +99,6 @@ $(function() {
 	});
 
 	$('#providers img').tooltip();
-	$('#result').hide();
-
 	$('#provider_actions .btn-group button').click(function(e) {
 		$("#result").hide();
 		$('#placeholder-result').show();
