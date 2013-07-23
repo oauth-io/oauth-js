@@ -61,17 +61,16 @@ $(function() {
 		if (oauthMethod == 'Popup')
 		{
 			//we authorize user using the popup mode
+			$('#success-text, #error-text').hide()
+			$('#placeholder-result').hide();
 			OAuth.popup(oauthProvider, function(error, success) {
-				$('#placeholder-result').hide();
-				if (success) {
-					$('#result').html(JSON.stringify(success, undefined, 2));
-					$('#success-text').show().find('span').html(oauthProvider)
+				if (error) {
+					$('#error-text').show().find('span').html(oauthProvider);
 				}
 				else {
-					$('#result').html(JSON.stringify(error, undefined, 2));
-					$('#success-text').show().find('span').html(oauthProvider);
+					$('#success-text').show().find('span').html(oauthProvider)
 				}
-				$('#result').show();
+				$('#result').html("success = " + JSON.stringify(success, undefined, 2) + "\n\nerror = " + JSON.stringify(error, undefined, 2)).show();
 			});
 		}
 		else {
