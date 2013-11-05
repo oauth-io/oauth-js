@@ -91,7 +91,7 @@ $(function() {
 
     //add provider list after the demonstration
 	$.each(providers, function(index, value) {
-		var srcImg = "https://oauth.io//auth/api/providers/" + value + "/logo";
+		var srcImg = "https://oauth.io/api/providers/" + value + "/logo";
 		var providers_container;
 
 		if (index % 15 == 0)
