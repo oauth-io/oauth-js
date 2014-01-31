@@ -1,7 +1,8 @@
 (function() {
 	"use strict";
 	var config = {
-		oauthd_url: 'https://oauth.io/auth'
+		oauthd_url: 'https://oauth.io',
+		version: 'web-0.1.2'
 	};
 
 	if ( ! window.OAuth) {
@@ -13,13 +14,12 @@
 			e.type = "text/javascript";
 			e.onload = function() {
 				buildOAuth(jQuery);
-				console.log(_preloadcalls);
 				for (var i in _preloadcalls)
 					window.OAuth[_preloadcalls[i].method].apply(window.OAuth, _preloadcalls[i].args);
 			};
 			document.getElementsByTagName("head")[0].appendChild(e);
 
-			var methods = ["initialize", "popup", "redirect", "callback", "http"];
+			var methods = ["initialize", "setOAuthdURL", "popup", "redirect", "callback", "http"];
 			window.OAuth = {};
 			var push_method = function(method) {
 				window.OAuth[method] = function() {
@@ -44,7 +44,7 @@
 	(function parse_urlfragment() {
 		var results = /[\\#&]oauthio=([^&]*)/.exec(document.location.hash);
 		if (results) {
-			document.location.hash = '';
+			document.location.hash = document.location.hash.replace(/&?oauthio=[^&]*/, '');
 			oauth_result = decodeURIComponent(results[1].replace(/\+/g, " "));
 			var cookie_state = readCookie("oauthio_state");
 			if (cookie_state) {
@@ -55,17 +55,27 @@
 	})();
 
 	function getAbsUrl(url) {
+		if (url.match(/^.{2,5}:\/\//))
+			return url;
+
 		if (url[0] === '/')
-			url = document.location.protocol + '//' + document.location.host + url;
-		else if ( ! url.match(/^.{2,5}:\/\//))
-			url = document.location.protocol + '//' + document.location.host + document.location.pathname + '/' + url;
-		return url;
+			return document.location.protocol + '//' + document.location.host + url;
+
+		var base_url = document.location.protocol + '//' + document.location.host + document.location.pathname;
+		if (base_url[base_url.length-1] != '/' && url[0] != '#')
+			return base_url + '/' + url;
+		return base_url + url;
 	}
 
-	function replaceParam(param, rep) {
-		return param.replace(/\{\{(.*?)\}\}/g, function(m,v) {
+	function replaceParam(param, rep, rep2) {
+		param = param.replace(/\{\{(.*?)\}\}/g, function(m,v) {
 			return rep[v] || "";
 		});
+		if (rep2)
+			param = param.replace(/\{(.*?)\}/g, function(m,v) {
+				return rep2[v] || "";
+			});
+		return param;
 	}
 
 	function sendCallback(opts) {
@@ -74,7 +84,9 @@
 
 		try {
 			data = JSON.parse(opts.data);
-		} catch (e) {}
+		} catch (e) {
+			return opts.callback(new Error('Error while parsing result'));
+		}
 
 		if ( ! data || ! data.provider)
 			return;
@@ -84,7 +96,7 @@
 
 		if (data.status === 'error' || data.status === 'fail') {
 			err = new Error(data.message);
-			err.body = data.data;
+			if (data.data) err.body = data.data;
 			return opts.callback(err);
 		}
 
@@ -100,7 +112,23 @@
 		if ( ! opts.provider)
 			data.data.provider = data.provider;
 
-		function make_res(provider, tokens, request, method) {
+		var res = data.data;
+		var request = res.request;
+		delete res.request;
+		var tokens;
+		if (res.access_token)
+			tokens = { token: res.access_token };
+		else if (res.oauth_token && res.oauth_token_secret)
+			tokens = { oauth_token: res.oauth_token, oauth_token_secret: res.oauth_token_secret};
+
+		if ( ! request)
+			return opts.callback(null, res, request);
+
+		if (request.required)
+			for (var i in request.required)
+				tokens[request.required[i]] = res[request.required[i]];
+
+		var make_res = function(request, method) {
 			return function(opts) {
 				var options = {};
 				if (typeof opts === 'string')
@@ -108,25 +136,16 @@
 				else if (typeof opts === 'object')
 					for (var i in opts) { options[i] = opts[i]; }
 				options.type = options.type || method;
-				options.oauthio = {provider:provider, tokens:tokens, request:request};
+				options.oauthio = {provider:data.provider, tokens:tokens, request:request};
 				return OAuth.http(options);
 			};
-		}
+		};
 
-		var res = data.data;
-		var request = res.request;
-		delete res.request;
-		var tokens;
-		if (res.access_token)
-			tokens = { access_token: res.access_token };
-		else if (res.oauth_token && res.oauth_token_secret)
-			tokens = { oauth_token: res.oauth_token, oauth_token_secret: res.oauth_token_secret};
-
-		res.get = make_res(data.provider, tokens, request, 'GET');
-		res.post = make_res(data.provider, tokens, request, 'POST');
-		res.put = make_res(data.provider, tokens, request, 'PUT');
-		res.patch = make_res(data.provider, tokens, request, 'PATCH');
-		res.del = make_res(data.provider, tokens, request, 'DELETE');
+		res.get = make_res(request, 'GET');
+		res.post = make_res(request, 'POST');
+		res.put = make_res(request, 'PUT');
+		res.patch = make_res(request, 'PATCH');
+		res.del = make_res(request, 'DELETE');
 
 		return opts.callback(null, res, request);
 	}
@@ -135,6 +154,13 @@
 		window.OAuth = {
 			initialize: function(public_key) {
 				config.key = public_key;
+			},
+			setOAuthdURL: function(url) {
+				config.oauthd_url = url;
+				config.oauthd_base = getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+			},
+			getVersion: function() {
+				return config.version;
 			},
 			popup: function(provider, opts, callback) {
 				var wnd;
@@ -150,7 +176,7 @@
 				}
 				client_states.push(opts.state);
 
-				var url = config.oauthd_base + '/auth/' + provider + "?k=" + config.key;
+				var url = config.oauthd_url + '/auth/' + provider + "?k=" + config.key;
 				url += '&d=' + encodeURIComponent(getAbsUrl('/'));
 				if (opts)
 					url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
@@ -171,6 +197,7 @@
 				wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top;
 
 				opts = {provider:provider};
+				var titleCheckTimer;
 				function getMessage(e) {
 					if (e.source !== wnd || e.origin !== config.oauthd_base)
 						return;
@@ -185,6 +212,7 @@
 					else if (document.detachEvent)
 						document.detachEvent("onmessage", getMessage);
 					opts.callback = function() {};
+					if (titleCheckTimer) clearInterval(titleCheckTimer);
 					return callback(e,r);
 				};
 
@@ -195,13 +223,24 @@
 				else if (window.addEventListener)
 					window.addEventListener("message", getMessage, false);
 
+				titleCheckTimer = setInterval(function() {
+					if (!wnd) return;
+					try {
+						var results = /^oauthio=(.*)$/.exec(wnd.document.title);
+						if (!results) return;
+						opts.data = decodeURIComponent(results[1].replace(/\+/g, " "));
+						wnd.close();
+						sendCallback(opts);
+					}
+					catch (e) {}
+				}, 1000);
+
 				setTimeout(function() {
 					opts.callback(new Error('Authorization timed out'));
 				}, 600 * 1000);
 
 				wnd = window.open(url, "Authorization", wnd_options);
-				if (wnd)
-					wnd.focus();
+				if (wnd) wnd.focus();
 			},
 			redirect: function(provider, opts, url) {
 				if (arguments.length == 2) {
@@ -214,7 +253,7 @@
 				}
 				createCookie("oauthio_state", opts.state);
 				var redirect_uri = encodeURIComponent(getAbsUrl(url));
-				url = config.oauthd_base + '/auth/' + provider + "?k=" + config.key;
+				url = config.oauthd_url + '/auth/' + provider + "?k=" + config.key;
 				url += "&redirect_uri=" + redirect_uri;
 				if (opts)
 					url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
@@ -234,9 +273,10 @@
 				var i;
 				for (i in opts) { options[i] = opts[i]; }
 				if ( ! options.oauthio.request.cors) {
-					if (options.url && options.url[0] != '/' )
+					options.url = encodeURIComponent(options.url);
+					if (options.url[0] != '/')
 						options.url = '/' + options.url;
-					options.url = config.oauthd_base + '/request/' + options.oauthio.provider + options.url;
+					options.url = config.oauthd_url + '/request/' + options.oauthio.provider + options.url;
 					options.headers = options.headers || {};
 					options.headers.oauthio = 'k=' + config.key;
 					if (options.oauthio.tokens.oauth_token && options.oauthio.tokens.oauth_token_secret)
@@ -246,32 +286,39 @@
 					delete options.oauthio;
 					return $.ajax(options);
 				}
-				if (options.oauthio.tokens.access_token) {
+				if (options.oauthio.tokens.token) {
 
 					if ( ! options.url.match(/^[a-z]{2,16}:\/\//)) {
 						if (options.url[0] !== '/')
 							options.url = '/' + options.url;
 						options.url = options.oauthio.request.url + options.url;
 					}
+					options.url = replaceParam(options.url, options.oauthio.tokens, options.oauthio.request.parameters);
 
-					var qs = [];
-					for (i in (options.oauthio.request.query||{}))
-						qs.push(encodeURIComponent(i) + '=' + encodeURIComponent(
-							replaceParam(options.oauthio.request.query[i], {
-								token: options.oauthio.tokens.access_token
-							})
-						));
-					qs = qs.join('&');
+					if (options.oauthio.request.query) {
+						var qs = [];
+						for (i in options.oauthio.request.query)
+							qs.push(encodeURIComponent(i) + '=' + encodeURIComponent(
+								replaceParam(options.oauthio.request.query[i],
+											options.oauthio.tokens,
+											options.oauthio.request.parameters)
+							));
 
-					if (options.url.indexOf('?') !== -1)
-						options.url += '&' + qs;
-					else
-						options.url += '?' + qs;
+						qs = qs.join('&');
+						if (options.url.indexOf('?') !== -1)
+							options.url += '&' + qs;
+						else
+							options.url += '?' + qs;
+					}
 
-					for (i in (options.oauthio.request.headers||{}))
-						options.headers[i] = replaceParam(options.oauthio.request.headers[i], {
-							token: options.oauthio.tokens.access_token
-						});
+					if (options.oauthio.request.headers)
+					{
+						options.headers = options.headers || {};
+						for (i in options.oauthio.request.headers)
+							options.headers[i] = replaceParam(options.oauthio.request.headers[i],
+																options.oauthio.tokens,
+																options.oauthio.request.parameters);
+					}
 
 					delete options.oauthio;
 					return $.ajax(options);
