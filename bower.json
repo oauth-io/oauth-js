@@ -3,7 +3,7 @@
 	"version": "0.1.2",
 	"main": "oauth.min.js",
 	"description": "OAuth that just works",
-	"license": "MIT",
+	"license": "apache2",
 	"ignore": [
 		".gitignore"
 	]
