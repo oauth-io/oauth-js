@@ -10,7 +10,7 @@
 		{
 			var _preloadcalls = [];
 			var e = document.createElement("script");
-			e.src = "http://code.jquery.com/jquery.min.js";
+			e.src = "//code.jquery.com/jquery.min.js";
 			e.type = "text/javascript";
 			e.onload = function() {
 				buildOAuth(jQuery);
