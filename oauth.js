@@ -379,11 +379,19 @@
 			}
 		};
 
-		if (typeof jQuery == 'undefined') {
+		if (typeof define === "function" && define.amd) {
+			// If this is being loaded with an AMD loader, the "define"
+			// function will be available.
+			define(['jquery'], function(jQuery) {
+				// Depend directly on jquery. When ready, call the delayedFunctions argument as below.
+				delayedFunctions(jQuery);
+				return exports.OAuth;
+			});
+		} else if (typeof jQuery == 'undefined') {
 			var _preloadcalls = [];
 			var delayfn;
 			if (typeof chrome != 'undefined' && chrome.runtime) {
-				delayfn = function() { return function() { throw new Error("Please include jQuery before oauth.js"); }; }
+				delayfn = function() { return function() { throw new Error("Please include jQuery before oauth.js"); }; };
 			}
 			else {
 				var e = document.createElement("script");
@@ -402,7 +410,7 @@
 						for (var arg in arguments)
 							args_copy[arg] = arguments[arg];
 						_preloadcalls.push({fn:f, args:args_copy});
-					}
+					};
 				};
 			}
 
