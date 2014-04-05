@@ -564,15 +564,15 @@
  * Configurable variables. You may need to tweak these to be compatible with
  * the server-side, but the defaults work in most cases.
  */
-var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase		*/
+var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase        */
 var b64pad  = ""; /* base-64 pad character. "=" for strict RFC compliance   */
 
 /*
  * These are the functions you'll usually want to call
  * They take string arguments and return either hex or base-64 encoded strings
  */
-function hex_sha1(s)	{ return rstr2hex(rstr_sha1(str2rstr_utf8(s))); }
-function b64_sha1(s)	{ return rstr2b64(rstr_sha1(str2rstr_utf8(s))); }
+function hex_sha1(s)    { return rstr2hex(rstr_sha1(str2rstr_utf8(s))); }
+function b64_sha1(s)    { return rstr2b64(rstr_sha1(str2rstr_utf8(s))); }
 function any_sha1(s, e) { return rstr2any(rstr_sha1(str2rstr_utf8(s)), e); }
 function hex_hmac_sha1(k, d)
 	{ return rstr2hex(rstr_hmac_sha1(str2rstr_utf8(k), str2rstr_utf8(d))); }
@@ -629,7 +629,7 @@ function rstr2hex(input)
 	{
 		x = input.charCodeAt(i);
 		output += hex_tab.charAt((x >>> 4) & 0x0F)
-					 +  hex_tab.charAt( x		& 0x0F);
+					 +  hex_tab.charAt( x        & 0x0F);
 	}
 	return output;
 }
@@ -647,7 +647,7 @@ function rstr2b64(input)
 	{
 		var triplet = (input.charCodeAt(i) << 16)
 								| (i + 1 < len ? input.charCodeAt(i+1) << 8 : 0)
-								| (i + 2 < len ? input.charCodeAt(i+2)	  : 0);
+								| (i + 2 < len ? input.charCodeAt(i+2)      : 0);
 		for(var j = 0; j < 4; j++)
 		{
 			if(i * 8 + j * 6 > input.length * 8) output += b64pad;
@@ -735,16 +735,16 @@ function str2rstr_utf8(input)
 			output += String.fromCharCode(x);
 		else if(x <= 0x7FF)
 			output += String.fromCharCode(0xC0 | ((x >>> 6 ) & 0x1F),
-																		0x80 | ( x		 & 0x3F));
+																		0x80 | ( x         & 0x3F));
 		else if(x <= 0xFFFF)
 			output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F),
 																		0x80 | ((x >>> 6 ) & 0x3F),
-																		0x80 | ( x		 & 0x3F));
+																		0x80 | ( x         & 0x3F));
 		else if(x <= 0x1FFFFF)
 			output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07),
 																		0x80 | ((x >>> 12) & 0x3F),
 																		0x80 | ((x >>> 6 ) & 0x3F),
-																		0x80 | ( x		 & 0x3F));
+																		0x80 | ( x         & 0x3F));
 	}
 	return output;
 }
@@ -756,7 +756,7 @@ function str2rstr_utf16le(input)
 {
 	var output = "";
 	for(var i = 0; i < input.length; i++)
-		output += String.fromCharCode( input.charCodeAt(i)		& 0xFF,
+		output += String.fromCharCode( input.charCodeAt(i)        & 0xFF,
 																	(input.charCodeAt(i) >>> 8) & 0xFF);
 	return output;
 }
@@ -766,7 +766,7 @@ function str2rstr_utf16be(input)
 	var output = "";
 	for(var i = 0; i < input.length; i++)
 		output += String.fromCharCode((input.charCodeAt(i) >>> 8) & 0xFF,
-																	 input.charCodeAt(i)		& 0xFF);
+																	 input.charCodeAt(i)        & 0xFF);
 	return output;
 }
 
