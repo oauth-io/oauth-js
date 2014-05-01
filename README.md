@@ -7,7 +7,7 @@ In the `<head>` of your HTML, include OAuth.js
 
 In your Javascript, add this line to initialize OAuth.js
 
-`OAuth.initialize('App public key');`
+`OAuth.initialize('your_app_public_key');`
 
 Usage
 =====
@@ -197,13 +197,17 @@ The `me()` request is an OAuth.io feature that allows you, when the provider is 
 To use the `me()` feature, do like the following (the example works for Facebook, Github, Twitter and many other providers in this case) :
 
 ```javascript
-OAuth.popup('aprovider')
+//provider can be 'facebook', 'twitter', 'github', or any provider
+//supported that contain the fields 'firstname', 'lastname' and 'avatar' 
+var provider = 'facebook';
+
+OAuth.popup(provider)
 .done(function(result) {
-    result.me(['firstname', 'lastname'])
+    result.me(['firstname', 'lastname', 'avatar']) //filter the results
     .done(function (response) {
-        //this will display true if the user was authorized to delete
-        //the picture
-        console.log(response);
+        console.log('Firstname: ', response.firstname);
+        console.log('Lastname: ', response.lastname);
+        console.log('Avatar url: ', response.avatar);
     })
     .fail(function (err) {
         //handle error with err
@@ -213,5 +217,40 @@ OAuth.popup('aprovider')
     //handle error with err
 });
 ```
+
+Contributing
+============
+
+You are welcome to fork and make pull requests. We will be happy to review them and include them in the code if they bring nice improvements :)
+
+Testing the SDK
+===============
+
+To test the SDK, you first need to install the npm modules `jasmine-node` and `istanbul` (to get the tests coverage) :
+
+```sh
+$ sudo npm install -g jasmine-node@2.0.0 istanbul
+```
+
+Then you can run the testsuite from the SDK root directory :
+
+```sh
+$ jasmine-node --verbose tests/unit/spec
+```
+
+Once you've isntalled `istanbul`, you can run the following command to get coverage information :
+
+```sh
+$ npm test
+```
+
+The coverage report is generated in the `coverage` folder. You can have a nice HTML render of the report in `coverage/lcof-report/index.html`
+
+License
+=======
+
+This SDK is published under the Apache2 License.
+
+
 
 More information in [oauth.io documentation](http://oauth.io/#/docs)
