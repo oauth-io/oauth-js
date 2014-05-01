@@ -1,3 +1,8 @@
+OAuth.io JavaScript SDK
+=======================
+
+This is the JavaScript SDK for [OAuth.io](https://oauth.io). OAuth.io allows you to integrate **100+ providers** really easily in your web app, without worrying about each provider's OAuth specific implementation.
+
 Installation
 ============
 
@@ -197,17 +202,17 @@ The `me()` request is an OAuth.io feature that allows you, when the provider is 
 To use the `me()` feature, do like the following (the example works for Facebook, Github, Twitter and many other providers in this case) :
 
 ```javascript
-//provider can be 'facebook', 'twitter', 'github', or any provider
-//supported that contain the fields 'firstname', 'lastname' and 'avatar' 
+//provider can be 'facebook', 'twitter', 'github', or any supported
+//provider that contain the fields 'firstname' and 'lastname' 
+//or an equivalent (e.g. "FirstName" or "first-name")
 var provider = 'facebook';
 
 OAuth.popup(provider)
 .done(function(result) {
-    result.me(['firstname', 'lastname', 'avatar']) //filter the results
+    result.me()
     .done(function (response) {
         console.log('Firstname: ', response.firstname);
         console.log('Lastname: ', response.lastname);
-        console.log('Avatar url: ', response.avatar);
     })
     .fail(function (err) {
         //handle error with err
@@ -217,6 +222,17 @@ OAuth.popup(provider)
     //handle error with err
 });
 ```
+
+*Filtering the results*
+
+You can filter the results of the `me()` method by passing an array of fields you need :
+
+```javascript
+//...
+result.me(['firstname', 'lastname', 'email'/*, ...*/])
+//...
+```
+
 
 Contributing
 ============
