@@ -62,7 +62,7 @@ To make a GET request, you have to call the `result.get` method like this :
 ```javascript
 //Let's say the /me endpoint on the provider API returns a JSON object
 //with the field "name" containing the name "John Doe"
-OAuth.popup('aprovider')
+OAuth.popup(provider)
 .done(function(result) {
     result.get('/me')
     .done(function (response) {
@@ -86,7 +86,7 @@ To make a POST request, you have to call the `result.post` method like this :
 //Let's say the /message endpoint on the provider waits for
 //a POST request containing the fields "user_id" and "content"
 //and returns the field "id" containing the id of the sent message 
-OAuth.popup('aprovider')
+OAuth.popup(provider)
 .done(function(result) {
     result.post('/message', {
         data: {
@@ -116,7 +116,7 @@ To make a PUT request, you have to call the `result.post` method like this :
 //a PUT request to update the authenticated user's profile 
 //containing the field "name" and returns the field "name" 
 //containing the new name
-OAuth.popup('aprovider')
+OAuth.popup(provider)
 .done(function(result) {
     result.put('/message', {
         data: {
@@ -145,7 +145,7 @@ To make a PATCH request, you have to call the `result.patch` method like this :
 //a PATCH request to update the authenticated user's profile 
 //containing the field "name" and returns the field "name" 
 //containing the new name
-OAuth.popup('aprovider')
+OAuth.popup(provider)
 .done(function(result) {
     result.patch('/message', {
         data: {
@@ -173,7 +173,7 @@ To make a DELETE request, you have to call the `result.del` method like this :
 //Let's say the /picture?id=picture_id endpoint on the provider waits for
 //a DELETE request to delete a picture with the id "84"
 //and returns true or false depending on the user's rights on the picture
-OAuth.popup('aprovider')
+OAuth.popup(provider)
 .done(function(result) {
     result.del('/picture?id=84')
     .done(function (response) {
