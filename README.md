@@ -6,6 +6,9 @@ This is the JavaScript SDK for [OAuth.io](https://oauth.io). OAuth.io allows you
 Installation
 ============
 
+Getting the SDK
+---------------
+
 To get the SDK, you can :
 
 - download the zip file from this repository
@@ -20,6 +23,9 @@ Just copy the dist/oauth.js or dist/oauth.min.js to your project.
 ```sh
 $ bower install oauth-js
 ```
+
+Integrating in your project
+---------------------------
 
 In the `<head>` of your HTML, include OAuth.js
 
