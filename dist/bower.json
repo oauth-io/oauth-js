@@ -1,0 +1,7 @@
+{
+    "name": "oauth-js",
+    "version": "0.2.0",
+    "main": "oauth.min.js",
+    "description": "OAuth that just works",
+    "license": "apache2"
+}
