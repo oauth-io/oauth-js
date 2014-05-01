@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.1.8",
+  version: "web-0.2.0",
   options: {}
 };
 
@@ -90,14 +90,14 @@ module.exports = function(window, document, jQuery, navigator) {
   return function(exports) {
     var delayedFunctions, delayfn, e, _preloadcalls;
     delayedFunctions = function($) {
-      oauthio.request = require("./oauthio_requests")($, config, client_states, cache);
+      oauthio.request = require("./oauthio_requests")($, config, client_states, cache, providers_api);
       providers_api.fetchDescription = function(provider) {
         if (providers_desc[provider]) {
           return;
         }
         providers_desc[provider] = true;
         $.ajax({
-          url: config.oauthd_base + config.oauthd_api + "/providers/" + provider,
+          url: config.oauthd_api + "/providers/" + provider,
           data: {
             extend: true
           },
@@ -434,7 +434,7 @@ module.exports = function(window, document, jQuery, navigator) {
         providers_api.fetchDescription = delayfn(function() {
           providers_api.fetchDescription.apply(providers_api, arguments);
         });
-        oauthio.request = require("./oauthio_requests")(window.jQuery, config, client_states, cache);
+        oauthio.request = require("./oauthio_requests")(window.jQuery, config, client_states, cache, providers_api);
       } else {
         delayedFunctions(window.jQuery);
       }
