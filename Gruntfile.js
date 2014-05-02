@@ -96,7 +96,7 @@ module.exports = function(grunt) {
             text = text.replace('{{sdk_version}}', package_info.version);
             text = text.replace('{{description}}', package_info.description);
             text = text.replace('{{license}}', package_info.license);
-            fs.writeFile('./dist/bower.json', text, function(e) {
+            fs.writeFile('./bower.json', text, function(e) {
                 if (e) {
                     console.err('A problem occured while creating bower.json');
                     done();
