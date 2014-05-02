@@ -1,7 +1,18 @@
 {
     "name": "oauth-js",
     "version": "{{sdk_version}}",
-    "main": "oauth.min.js",
+    "main": "dist/oauth.min.js",
     "description": "{{description}}",
-    "license": "{{license}}"
+    "license": "{{license}}",
+    "ignore": [
+        "coffee",
+        "coverage",
+        "js",
+        "node_modules",
+        "tests",
+        "templates",
+        "Gruntfile.js",
+        "package.json",
+        ".gitignore"
+    ]
 }
