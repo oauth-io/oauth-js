@@ -85,7 +85,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-jasmine-node');
 
-    grunt.registerTask('bower', 'Creates an updated bower.json to the dist folder', function() {
+    grunt.registerTask('bower', 'Creates an updated bower.json', function() {
         var done = this.async();
         fs.readFile('./templates/bower.json', 'UTF-8', function(e, text) {
             if (e) {
@@ -102,7 +102,7 @@ module.exports = function(grunt) {
                     done();
                     return;
                 }
-                console.log("Wrote bower.json file in app/sdk-js/dist/");
+                console.log("Wrote bower.json file");
                 done();
             });
         });
