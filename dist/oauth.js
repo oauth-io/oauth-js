@@ -182,7 +182,7 @@ module.exports = function(window, document, jQuery, navigator) {
             }
             return callback(new Error("OAuth object must be initialized"));
           }
-          if (arguments.length === 2) {
+          if (arguments.length === 2 && typeof opts === 'function') {
             callback = opts;
             opts = {};
           }
