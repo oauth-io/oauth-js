@@ -145,7 +145,7 @@ module.exports = (window, document, jQuery, navigator) ->
 					unless config.key
 						defer?.reject new Error("OAuth object must be initialized")
 						return callback(new Error("OAuth object must be initialized"))
-					if arguments.length is 2
+					if arguments.length is 2 and typeof opts == 'function'
 						callback = opts
 						opts = {}
 					if cache.cacheEnabled(opts.cache)
