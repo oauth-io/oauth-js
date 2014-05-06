@@ -144,7 +144,10 @@ module.exports = (window, document, jQuery, navigator) ->
 					opts = opts or {}
 					unless config.key
 						defer?.reject new Error("OAuth object must be initialized")
-						return callback(new Error("OAuth object must be initialized"))
+						if not callback?
+							return
+						else
+							return callback(new Error("OAuth object must be initialized"))
 					if arguments.length is 2 and typeof opts == 'function'
 						callback = opts
 						opts = {}
