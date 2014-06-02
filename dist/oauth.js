@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.2.0",
+  version: "web-0.2.1",
   options: {}
 };
 
@@ -197,7 +197,7 @@ module.exports = function(window, document, jQuery, navigator) {
               if (callback) {
                 return callback(null, res);
               } else {
-                return;
+                return defer.promise();
               }
             }
           }

@@ -156,7 +156,7 @@ module.exports = (window, document, jQuery, navigator) ->
 							if callback
 								return callback(null, res)
 							else
-								return
+								return defer.promise()
 					unless opts.state
 						opts.state = sha1.create_hash()
 						opts.state_type = "client"
