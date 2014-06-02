@@ -114,7 +114,7 @@ module.exports = (window, document, jQuery, navigator) ->
 						oauthio.request.mkHttp provider, tokens, request, method
 
 					make_res_endpoint = (method, url) ->
-						oauthio.request.mkHttpEndpoint data.provider, tokens, request, method, url
+						oauthio.request.mkHttpEndpoint provider, tokens, request, method, url
 
 					res = {}
 					for i of tokens
@@ -124,9 +124,7 @@ module.exports = (window, document, jQuery, navigator) ->
 					res.put = make_res("PUT")
 					res.patch = make_res("PATCH")
 					res.del = make_res("DELETE")
-					res.me = (opts) ->
-						oauthio.request.mkHttpMe data.provider, tokens, request, "GET"
-						return
+					res.me = oauthio.request.mkHttpMe provider, tokens, request, "GET"
 
 					res
 
