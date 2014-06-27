@@ -450,7 +450,7 @@ var Url,
 
 Url = require('../tools/url')();
 
-module.exports = function($, config, client_states, cache) {
+module.exports = function($, config, client_states, cache, providers_api) {
   return {
     http: function(opts) {
       var defer, desc_opts, doRequest, i, options;
