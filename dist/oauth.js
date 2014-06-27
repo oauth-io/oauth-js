@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.2.0",
+  version: "web-0.2.1",
   options: {}
 };
 
@@ -143,7 +143,7 @@ module.exports = function(window, document, jQuery, navigator) {
             return oauthio.request.mkHttp(provider, tokens, request, method);
           };
           make_res_endpoint = function(method, url) {
-            return oauthio.request.mkHttpEndpoint(data.provider, tokens, request, method, url);
+            return oauthio.request.mkHttpEndpoint(provider, tokens, request, method, url);
           };
           res = {};
           for (i in tokens) {
@@ -154,9 +154,7 @@ module.exports = function(window, document, jQuery, navigator) {
           res.put = make_res("PUT");
           res.patch = make_res("PATCH");
           res.del = make_res("DELETE");
-          res.me = function(opts) {
-            oauthio.request.mkHttpMe(data.provider, tokens, request, "GET");
-          };
+          res.me = oauthio.request.mkHttpMe(provider, tokens, request, "GET");
           return res;
         },
         popup: function(provider, opts, callback) {
@@ -180,7 +178,11 @@ module.exports = function(window, document, jQuery, navigator) {
             if (defer != null) {
               defer.reject(new Error("OAuth object must be initialized"));
             }
-            return callback(new Error("OAuth object must be initialized"));
+            if (callback == null) {
+              return;
+            } else {
+              return callback(new Error("OAuth object must be initialized"));
+            }
           }
           if (arguments.length === 2 && typeof opts === 'function') {
             callback = opts;
@@ -195,7 +197,7 @@ module.exports = function(window, document, jQuery, navigator) {
               if (callback) {
                 return callback(null, res);
               } else {
-                return;
+                return defer.promise();
               }
             }
           }
@@ -448,7 +450,7 @@ var Url,
 
 Url = require('../tools/url')();
 
-module.exports = function($, config, client_states, cache) {
+module.exports = function($, config, client_states, cache, providers_api) {
   return {
     http: function(opts) {
       var defer, desc_opts, doRequest, i, options;

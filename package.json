@@ -1,6 +1,6 @@
 {
   "name": "oauth-js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "OAuth that just works",
   "main": "dist/oauth.min.js",
   "directories": {
