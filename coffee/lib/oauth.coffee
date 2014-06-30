@@ -164,14 +164,22 @@ module.exports = (window, document, jQuery, navigator) ->
 					url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key
 					url += "&d=" + encodeURIComponent(Url.getAbsUrl("/"))
 					url += "&opts=" + encodeURIComponent(JSON.stringify(opts))  if opts
-					wnd_settings =
-						width: Math.floor(window.outerWidth * 0.8)
-						height: Math.floor(window.outerHeight * 0.5)
 
-					wnd_settings.height = 350  if wnd_settings.height < 350
-					wnd_settings.width = 800  if wnd_settings.width < 800
-					wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2
-					wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8
+					if opts.wnd_settings
+						wnd_settings = opts.wnd_settings
+						delete opts.wnd_settings
+					else
+						wnd_settings =
+							width: Math.floor(window.outerWidth * 0.8)
+							height: Math.floor(window.outerHeight * 0.5)
+					if not wnd_settings.height?
+						wnd_settings.height = (350  if wnd_settings.height < 350)
+					if not wnd_settings.width?
+						wnd_settings.width = (800  if wnd_settings.width < 800)
+					if not wnd_settings.left?
+						wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2
+					if not wnd_settings.top?
+						wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8
 					wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height
 					wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0"
 					wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top

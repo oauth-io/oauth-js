@@ -211,18 +211,27 @@ module.exports = function(window, document, jQuery, navigator) {
           if (opts) {
             url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
           }
-          wnd_settings = {
-            width: Math.floor(window.outerWidth * 0.8),
-            height: Math.floor(window.outerHeight * 0.5)
-          };
-          if (wnd_settings.height < 350) {
-            wnd_settings.height = 350;
+          if (opts.wnd_settings) {
+            wnd_settings = opts.wnd_settings;
+            delete opts.wnd_settings;
+          } else {
+            wnd_settings = {
+              width: Math.floor(window.outerWidth * 0.8),
+              height: Math.floor(window.outerHeight * 0.5)
+            };
           }
-          if (wnd_settings.width < 800) {
-            wnd_settings.width = 800;
+          if (wnd_settings.height == null) {
+            wnd_settings.height = (wnd_settings.height < 350 ? 350 : void 0);
           }
-          wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2;
-          wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8;
+          if (wnd_settings.width == null) {
+            wnd_settings.width = (wnd_settings.width < 800 ? 800 : void 0);
+          }
+          if (wnd_settings.left == null) {
+            wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2;
+          }
+          if (wnd_settings.top == null) {
+            wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8;
+          }
           wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height;
           wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0";
           wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top;
