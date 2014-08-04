@@ -129,12 +129,14 @@ module.exports = (window, document, jQuery, navigator) ->
 					res
 
 				popup: (provider, opts, callback) ->
+					gotmessage = false
 					getMessage = (e) ->
 						return  if e.origin isnt config.oauthd_base
 						try
 							wnd.close()
 						opts.data = e.data
 						oauthio.request.sendCallback opts, defer
+						gotmessage = true
 					wnd = undefined
 					frm = undefined
 					wndTimeout = undefined
@@ -227,9 +229,17 @@ module.exports = (window, document, jQuery, navigator) ->
 							wnd.close()
 						return
 					, 1200 * 1000)
+					
 					wnd = window.open(url, "Authorization", wnd_options)
 					if wnd
 						wnd.focus()
+						interval = window.setInterval () ->
+							if wnd == null || wnd.closed
+								window.clearInterval interval
+								if not gotmessage
+									defer?.reject new Error("The popup was closed")
+									opts.callback new Error("The popup was closed")  if opts.callback and typeof opts.callback == "function"
+						, 500
 					else
 						defer?.reject new Error("Could not open a popup")
 						opts.callback new Error("Could not open a popup")  if opts.callback and typeof opts.callback == "function"
