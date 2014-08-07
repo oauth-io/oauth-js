@@ -720,7 +720,7 @@ module.exports = function($, config, client_states, cache, providers_api) {
         v = client_states[k];
         client_states[k] = v.replace(/\s+/g, "");
       }
-      if (!data.state || !client_states.indexOf(data.state) === -1) {
+      if (!data.state || client_states.indexOf(data.state) === -1) {
         if (defer != null) {
           defer.reject(new Error("State is not matching"));
         }

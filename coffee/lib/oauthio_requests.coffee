@@ -175,7 +175,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		for k,v of client_states
 			client_states[k] = v.replace(/\s+/g,"")
 
-		if not data.state or not client_states.indexOf(data.state) == -1
+		if not data.state or client_states.indexOf(data.state) == -1
 			defer?.reject new Error("State is not matching")
 			if opts.callback and typeof opts.callback == "function"
 				return opts.callback(new Error("State is not matching"))
