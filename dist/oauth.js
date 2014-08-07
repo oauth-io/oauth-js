@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.2.3",
+  version: "web-0.2.4",
   options: {}
 };
 
@@ -664,7 +664,7 @@ module.exports = function($, config, client_states, cache, providers_api) {
       };
     },
     sendCallback: function(opts, defer) {
-      var base, data, e, err, i, make_res, request, res, tokens;
+      var base, data, e, err, i, k, make_res, request, res, tokens, v;
       base = this;
       data = void 0;
       err = void 0;
@@ -715,7 +715,12 @@ module.exports = function($, config, client_states, cache, providers_api) {
           return;
         }
       }
-      if (!data.state || client_states.indexOf(data.state) === -1) {
+      data.state = data.state.replace(/\s+/g, "");
+      for (k in client_states) {
+        v = client_states[k];
+        client_states[k] = v.replace(/\s+/g, "");
+      }
+      if (!data.state || !client_states.indexOf(data.state) === -1) {
         if (defer != null) {
           defer.reject(new Error("State is not matching"));
         }
