@@ -716,7 +716,7 @@ module.exports = function($, config, client_states, cache, providers_api) {
         }
       }
       data.state = data.state.replace(/\s+/g, "");
-      for (k in client_states) {
+      for (var k=0; k < client_states.length; k++) {
         v = client_states[k];
         client_states[k] = v.replace(/\s+/g, "");
       }
