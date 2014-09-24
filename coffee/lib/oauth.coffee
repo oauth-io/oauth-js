@@ -4,15 +4,14 @@ cookies = require("../tools/cookies")
 cache = require("../tools/cache")
 Url = require("../tools/url")
 sha1 = require("../tools/sha1")
-module.exports = (window, document, jQuery, navigator) ->
-	$ = jQuery
+oauthio_requests = require("./oauthio_requests")
+module.exports = (window, document, $, navigator) ->
 
 	# datastore = datastore(config, document)
 	Url = Url(document)
 	cookies.init config, document
 	cache.init cookies, config
 
-	oauthio = request: {}
 	providers_desc = {}
 	providers_cb = {}
 	providers_api =
@@ -26,7 +25,27 @@ module.exports = (window, document, jQuery, navigator) ->
 			return
 
 		
-		# "fetchDescription": function(provider) is created once jquery loaded
+		fetchDescription: (provider) ->
+			return if providers_desc[provider]
+			providers_desc[provider] = true
+			$.ajax(
+				url: config.oauthd_api + "/providers/" + provider
+				data:
+					extend: true
+
+				dataType: "json"
+			).done((data) ->
+				providers_desc[provider] = data.data
+				providers_api.execProvidersCb provider, null, data.data
+				return
+			).always ->
+				if typeof providers_desc[provider] isnt "object"
+					delete providers_desc[provider]
+
+					providers_api.execProvidersCb provider, new Error("Unable to fetch request description")
+				return
+
+			return
 		getDescription: (provider, opts, callback) ->
 			opts = opts or {}
 			return callback(null, providers_desc[provider])  if typeof providers_desc[provider] is "object"
@@ -62,34 +81,9 @@ module.exports = (window, document, jQuery, navigator) ->
 			document.location.href = newLocation
 	}
 
+	oauthio = request: oauthio_requests($, config, client_states, cache, providers_api)
+
 	return (exports) ->
-		
-		# create popup
-		delayedFunctions = ($) ->
-			oauthio.request = require("./oauthio_requests")($, config, client_states, cache, providers_api)
-			providers_api.fetchDescription = (provider) ->
-				return  if providers_desc[provider]
-				providers_desc[provider] = true
-				$.ajax(
-					url: config.oauthd_api + "/providers/" + provider
-					data:
-						extend: true
-
-					dataType: "json"
-				).done((data) ->
-					providers_desc[provider] = data.data
-					providers_api.execProvidersCb provider, null, data.data
-					return
-				).always ->
-					if typeof providers_desc[provider] isnt "object"
-						delete providers_desc[provider]
-
-						providers_api.execProvidersCb provider, new Error("Unable to fetch request description")
-					return
-
-				return
-
-			return
 		unless exports.OAuth?
 			exports.OAuth =
 				initialize: (public_key, options) ->
@@ -140,7 +134,7 @@ module.exports = (window, document, jQuery, navigator) ->
 					wnd = undefined
 					frm = undefined
 					wndTimeout = undefined
-					defer = window.jQuery?.Deferred()
+					defer = $.Deferred()
 					opts = opts or {}
 					unless config.key
 						defer?.reject new Error("OAuth object must be initialized")
@@ -268,7 +262,7 @@ module.exports = (window, document, jQuery, navigator) ->
 					return
 
 				callback: (provider, opts, callback) ->
-					defer = window.jQuery?.Deferred()
+					defer = $.Deferred()
 					if arguments.length is 1 and typeof provider == "function"
 						callback = provider
 						provider = `undefined`
@@ -312,45 +306,4 @@ module.exports = (window, document, jQuery, navigator) ->
 				http: (opts) ->
 					oauthio.request.http opts  if oauthio.request.http
 					return
-
-			if typeof window.jQuery is "undefined"
-				_preloadcalls = []
-				delayfn = undefined
-				if typeof chrome isnt "undefined" and chrome.extension
-					delayfn = ->
-						->
-							throw new Error("Please include jQuery before oauth.js")
-							return
-				else
-					e = document.createElement("script")
-					e.src = "//code.jquery.com/jquery.min.js"
-					e.type = "text/javascript"
-					e.onload = ->
-						delayedFunctions window.jQuery
-						for i of _preloadcalls
-							_preloadcalls[i].fn.apply(null, _preloadcalls[i].args)
-						return
-
-					document.getElementsByTagName("head")[0].appendChild e
-					delayfn = (f) ->
-						->
-							args_copy = []
-							for arg of arguments
-								 args_copy[arg] = arguments[arg]
-							_preloadcalls.push
-								fn: f
-								args: args_copy
-
-							return
-				oauthio.request.http = delayfn(->
-					oauthio.request.http.apply exports.OAuth, arguments
-					return
-				)
-				providers_api.fetchDescription = delayfn(->
-					providers_api.fetchDescription.apply providers_api, arguments
-					return
-				)
-				oauthio.request = require("./oauthio_requests")(window.jQuery, config, client_states, cache, providers_api)
-			else
-				delayedFunctions window.jQuery
 		return
