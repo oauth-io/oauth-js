@@ -1,3 +1,6 @@
 node_modules
 coverage
 /js/*
+!/js/tools
+/js/tools/*
+!/js/tools/jquery-lite.js
