@@ -1,6 +1,12 @@
+"use strict"
+
 Url = require('../tools/url')()
 
-module.exports = ($, config, client_states, cache, providers_api) ->
+module.exports = (oio, client_states, providers_api) ->
+	$ = oio.getJquery()
+	config = oio.getConfig()
+	cache = oio.getCache()
+
 	http: (opts) ->
 		doRequest = ->
 			request = options.oauthio.request or {}
@@ -172,6 +178,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 
 		#checking if state is known
 		data.state = data.state.replace(/\s+/g,"")
+		console.log client_states
 		for k,v of client_states
 			client_states[k] = v.replace(/\s+/g,"")
 

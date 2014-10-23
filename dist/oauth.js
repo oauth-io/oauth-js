@@ -8,25 +8,471 @@ module.exports = {
 
 },{}],2:[function(require,module,exports){
 "use strict";
-var Url, cache, config, cookies, oauthio_requests, sha1;
+module.exports = function(oio) {
+  var $, base;
+  base = oio.getOAuthdURL();
+  $ = oio.getJquery();
+  return {
+    get: (function(_this) {
+      return function(url, params, cb) {
+        return $.ajax({
+          url: base + url,
+          type: 'get',
+          data: params,
+          success: cb,
+          error: cb
+        });
+      };
+    })(this),
+    post: (function(_this) {
+      return function(url, params, cb) {
+        return $.ajax({
+          url: base + url,
+          type: 'post',
+          data: params,
+          success: cb,
+          error: cb
+        });
+      };
+    })(this),
+    put: (function(_this) {
+      return function(url, params, cb) {
+        return $.ajax({
+          url: base + url,
+          type: 'put',
+          data: params,
+          success: cb,
+          error: cb
+        });
+      };
+    })(this),
+    del: (function(_this) {
+      return function(url, params, cb) {
+        return $.ajax({
+          url: base + url,
+          type: 'delete',
+          data: params,
+          success: cb,
+          error: cb
+        });
+      };
+    })(this)
+  };
+};
 
-config = require("../config");
+},{}],3:[function(require,module,exports){
+"use strict";
+var Location, Url, cache, config, cookies;
+
+config = require('../config');
+
+Url = require("../tools/url");
+
+Location = require('../tools/location_operations');
 
 cookies = require("../tools/cookies");
 
 cache = require("../tools/cache");
 
-Url = require("../tools/url");
+module.exports = function(window, document, jquery, navigator) {
+  var location_operations, oio;
+  Url = Url(document);
+  cookies.init(config, document);
+  location_operations = Location(document);
+  cache.init(cookies, config);
+  oio = {
+    initialize: function(public_key, options) {
+      var i;
+      config.key = public_key;
+      if (options) {
+        for (i in options) {
+          config.options[i] = options[i];
+        }
+      }
+    },
+    setOAuthdURL: function(url) {
+      config.oauthd_url = url;
+      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+    },
+    getOAuthdURL: function() {
+      return config.oauthd_url;
+    },
+    getVersion: function() {
+      return config.version;
+    },
+    extend: function(name, module) {
+      return this[name] = module(this);
+    },
+    getConfig: function() {
+      return config;
+    },
+    getWindow: function() {
+      return window;
+    },
+    getDocument: function() {
+      return document;
+    },
+    getNavigator: function() {
+      return navigator;
+    },
+    getJquery: function() {
+      return jquery;
+    },
+    getUrl: function() {
+      return Url;
+    },
+    getCache: function() {
+      return cache;
+    },
+    getCookies: function() {
+      return cookies;
+    },
+    getLocationOperations: function() {
+      return location_operations;
+    }
+  };
+  return oio;
+};
+
+},{"../config":1,"../tools/cache":9,"../tools/cookies":10,"../tools/location_operations":12,"../tools/url":14}],4:[function(require,module,exports){
+"use strict";
+var cookies, oauthio_requests, sha1;
+
+cookies = require("../tools/cookies");
+
+oauthio_requests = require("./request");
 
 sha1 = require("../tools/sha1");
 
-oauthio_requests = require("./oauthio_requests");
+module.exports = function(oio) {
+  var $, Url, cache, client_states, config, document, location_operations, oauth_result, oauthio, parse_urlfragment, providers_api, window;
+  Url = oio.getUrl();
+  config = oio.getConfig();
+  document = oio.getDocument();
+  window = oio.getWindow();
+  $ = oio.getJquery();
+  cache = oio.getCache();
+  providers_api = require('./providers')(oio);
+  config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+  client_states = [];
+  oauth_result = void 0;
+  (parse_urlfragment = function() {
+    var cookie_state, results;
+    results = /[\\#&]oauthio=([^&]*)/.exec(document.location.hash);
+    if (results) {
+      document.location.hash = document.location.hash.replace(/&?oauthio=[^&]*/, "");
+      oauth_result = decodeURIComponent(results[1].replace(/\+/g, " "));
+      cookie_state = cookies.readCookie("oauthio_state");
+      if (cookie_state) {
+        client_states.push(cookie_state);
+        cookies.eraseCookie("oauthio_state");
+      }
+    }
+  })();
+  location_operations = oio.getLocationOperations();
+  oauthio = {
+    request: oauthio_requests(oio, client_states, providers_api)
+  };
+  return {
+    create: function(provider, tokens, request) {
+      var i, make_res, make_res_endpoint, res;
+      if (!tokens) {
+        return cache.tryCache(exports.OAuth, provider, true);
+      }
+      if (typeof request !== "object") {
+        providers_api.fetchDescription(provider);
+      }
+      make_res = function(method) {
+        return oauthio.request.mkHttp(provider, tokens, request, method);
+      };
+      make_res_endpoint = function(method, url) {
+        return oauthio.request.mkHttpEndpoint(provider, tokens, request, method, url);
+      };
+      res = {};
+      for (i in tokens) {
+        res[i] = tokens[i];
+      }
+      res.get = make_res("GET");
+      res.post = make_res("POST");
+      res.put = make_res("PUT");
+      res.patch = make_res("PATCH");
+      res.del = make_res("DELETE");
+      res.me = oauthio.request.mkHttpMe(provider, tokens, request, "GET");
+      return res;
+    },
+    popup: function(provider, opts, callback) {
+      var defer, frm, getMessage, gotmessage, interval, res, url, wnd, wndTimeout, wnd_options, wnd_settings;
+      gotmessage = false;
+      getMessage = function(e) {
+        if (e.origin !== config.oauthd_base) {
+          return;
+        }
+        try {
+          wnd.close();
+        } catch (_error) {}
+        opts.data = e.data;
+        oauthio.request.sendCallback(opts, defer);
+        return gotmessage = true;
+      };
+      wnd = void 0;
+      frm = void 0;
+      wndTimeout = void 0;
+      defer = $.Deferred();
+      opts = opts || {};
+      if (!config.key) {
+        if (defer != null) {
+          defer.reject(new Error("OAuth object must be initialized"));
+        }
+        if (callback == null) {
+          return defer.promise();
+        } else {
+          return callback(new Error("OAuth object must be initialized"));
+        }
+      }
+      if (arguments.length === 2 && typeof opts === 'function') {
+        callback = opts;
+        opts = {};
+      }
+      if (cache.cacheEnabled(opts.cache)) {
+        res = cache.tryCache(exports.OAuth, provider, opts.cache);
+        if (res) {
+          if (defer != null) {
+            defer.resolve(res);
+          }
+          if (callback) {
+            return callback(null, res);
+          } else {
+            return defer.promise();
+          }
+        }
+      }
+      if (!opts.state) {
+        opts.state = sha1.create_hash();
+        opts.state_type = "client";
+      }
+      client_states.push(opts.state);
+      url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key;
+      url += "&d=" + encodeURIComponent(Url.getAbsUrl("/"));
+      if (opts) {
+        url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
+      }
+      if (opts.wnd_settings) {
+        wnd_settings = opts.wnd_settings;
+        delete opts.wnd_settings;
+      } else {
+        wnd_settings = {
+          width: Math.floor(window.outerWidth * 0.8),
+          height: Math.floor(window.outerHeight * 0.5)
+        };
+      }
+      if (wnd_settings.height == null) {
+        wnd_settings.height = (wnd_settings.height < 350 ? 350 : void 0);
+      }
+      if (wnd_settings.width == null) {
+        wnd_settings.width = (wnd_settings.width < 800 ? 800 : void 0);
+      }
+      if (wnd_settings.left == null) {
+        wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2;
+      }
+      if (wnd_settings.top == null) {
+        wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8;
+      }
+      wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height;
+      wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0";
+      wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top;
+      opts = {
+        provider: provider,
+        cache: opts.cache
+      };
+      opts.callback = function(e, r) {
+        if (window.removeEventListener) {
+          window.removeEventListener("message", getMessage, false);
+        } else if (window.detachEvent) {
+          window.detachEvent("onmessage", getMessage);
+        } else {
+          if (document.detachEvent) {
+            document.detachEvent("onmessage", getMessage);
+          }
+        }
+        opts.callback = function() {};
+        if (wndTimeout) {
+          clearTimeout(wndTimeout);
+          wndTimeout = undefined;
+        }
+        if (callback) {
+          return callback(e, r);
+        } else {
+          return undefined;
+        }
+      };
+      if (window.attachEvent) {
+        window.attachEvent("onmessage", getMessage);
+      } else if (document.attachEvent) {
+        document.attachEvent("onmessage", getMessage);
+      } else {
+        if (window.addEventListener) {
+          window.addEventListener("message", getMessage, false);
+        }
+      }
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessageExternal) {
+        chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
+          request.origin = sender.url.match(/^.{2,5}:\/\/[^/]+/)[0];
+          if (defer != null) {
+            defer.resolve();
+          }
+          return getMessage(request);
+        });
+      }
+      if (!frm && (navigator.userAgent.indexOf("MSIE") !== -1 || navigator.appVersion.indexOf("Trident/") > 0)) {
+        frm = document.createElement("iframe");
+        frm.src = config.oauthd_url + "/auth/iframe?d=" + encodeURIComponent(Url.getAbsUrl("/"));
+        frm.width = 0;
+        frm.height = 0;
+        frm.frameBorder = 0;
+        frm.style.visibility = "hidden";
+        document.body.appendChild(frm);
+      }
+      wndTimeout = setTimeout(function() {
+        if (defer != null) {
+          defer.reject(new Error("Authorization timed out"));
+        }
+        if (opts.callback && typeof opts.callback === "function") {
+          opts.callback(new Error("Authorization timed out"));
+        }
+        try {
+          wnd.close();
+        } catch (_error) {}
+      }, 1200 * 1000);
+      wnd = window.open(url, "Authorization", wnd_options);
+      if (wnd) {
+        wnd.focus();
+        interval = window.setInterval(function() {
+          if (wnd === null || wnd.closed) {
+            window.clearInterval(interval);
+            if (!gotmessage) {
+              if (defer != null) {
+                defer.reject(new Error("The popup was closed"));
+              }
+              if (opts.callback && typeof opts.callback === "function") {
+                return opts.callback(new Error("The popup was closed"));
+              }
+            }
+          }
+        }, 500);
+      } else {
+        if (defer != null) {
+          defer.reject(new Error("Could not open a popup"));
+        }
+        if (opts.callback && typeof opts.callback === "function") {
+          opts.callback(new Error("Could not open a popup"));
+        }
+      }
+      return defer != null ? defer.promise() : void 0;
+    },
+    redirect: function(provider, opts, url) {
+      var redirect_uri, res;
+      if (arguments.length === 2) {
+        url = opts;
+        opts = {};
+      }
+      if (cache.cacheEnabled(opts.cache)) {
+        res = cache.tryCache(exports.OAuth, provider, opts.cache);
+        if (res) {
+          url = Url.getAbsUrl(url) + (url.indexOf("#") === -1 ? "#" : "&") + "oauthio=cache";
+          location_operations.changeHref(url);
+          location_operations.reload();
+          return;
+        }
+      }
+      if (!opts.state) {
+        opts.state = sha1.create_hash();
+        opts.state_type = "client";
+      }
+      cookies.createCookie("oauthio_state", opts.state);
+      redirect_uri = encodeURIComponent(Url.getAbsUrl(url));
+      url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key;
+      url += "&redirect_uri=" + redirect_uri;
+      if (opts) {
+        url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
+      }
+      location_operations.changeHref(url);
+    },
+    callback: function(provider, opts, callback) {
+      var defer, res;
+      defer = $.Deferred();
+      if (arguments.length === 1 && typeof provider === "function") {
+        callback = provider;
+        provider = undefined;
+        opts = {};
+      }
+      if (arguments.length === 1 && typeof provider === "string") {
+        opts = {};
+      }
+      if (arguments.length === 2 && typeof opts === "function") {
+        callback = opts;
+        opts = {};
+      }
+      if (cache.cacheEnabled(opts.cache) || oauth_result === "cache") {
+        res = cache.tryCache(exports.OAuth, provider, opts.cache);
+        if (oauth_result === "cache" && (typeof provider !== "string" || !provider)) {
+          if (defer != null) {
+            defer.reject(new Error("You must set a provider when using the cache"));
+          }
+          if (callback) {
+            return callback(new Error("You must set a provider when using the cache"));
+          } else {
+            return defer != null ? defer.promise() : void 0;
+          }
+        }
+        if (res) {
+          if (callback) {
+            if (res) {
+              return callback(null, res);
+            }
+          } else {
+            if (defer != null) {
+              defer.resolve(res);
+            }
+            return defer != null ? defer.promise() : void 0;
+          }
+        }
+      }
+      if (!oauth_result) {
+        return;
+      }
+      oauthio.request.sendCallback({
+        data: oauth_result,
+        provider: provider,
+        cache: opts.cache,
+        callback: callback
+      }, defer);
+      return defer != null ? defer.promise() : void 0;
+    },
+    clearCache: function(provider) {
+      cookies.eraseCookie("oauthio_provider_" + provider);
+    },
+    http_me: function(opts) {
+      if (oauthio.request.http_me) {
+        oauthio.request.http_me(opts);
+      }
+    },
+    http: function(opts) {
+      if (oauthio.request.http) {
+        oauthio.request.http(opts);
+      }
+    }
+  };
+};
 
-module.exports = function(window, document, $, navigator) {
-  var client_states, oauth_result, oauthio, parse_urlfragment, providers_api, providers_cb, providers_desc;
-  Url = Url(document);
-  cookies.init(config, document);
-  cache.init(cookies, config);
+},{"../tools/cookies":10,"../tools/sha1":13,"./providers":5,"./request":6}],5:[function(require,module,exports){
+"use strict";
+var config;
+
+config = require("../config");
+
+module.exports = function(oio) {
+  var $, providers_api, providers_cb, providers_desc;
+  $ = oio.getJquery();
   providers_desc = {};
   providers_cb = {};
   providers_api = {
@@ -76,357 +522,21 @@ module.exports = function(window, document, $, navigator) {
       providers_cb[provider].push(callback);
     }
   };
-  config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
-  client_states = [];
-  oauth_result = void 0;
-  (parse_urlfragment = function() {
-    var cookie_state, results;
-    results = /[\\#&]oauthio=([^&]*)/.exec(document.location.hash);
-    if (results) {
-      document.location.hash = document.location.hash.replace(/&?oauthio=[^&]*/, "");
-      oauth_result = decodeURIComponent(results[1].replace(/\+/g, " "));
-      cookie_state = cookies.readCookie("oauthio_state");
-      if (cookie_state) {
-        client_states.push(cookie_state);
-        cookies.eraseCookie("oauthio_state");
-      }
-    }
-  })();
-  window.location_operations = {
-    reload: function() {
-      return document.location.reload();
-    },
-    getHash: function() {
-      return document.location.hash;
-    },
-    setHash: function(newHash) {
-      return document.location.hash = newHash;
-    },
-    changeHref: function(newLocation) {
-      return document.location.href = newLocation;
-    }
-  };
-  oauthio = {
-    request: oauthio_requests($, config, client_states, cache, providers_api)
-  };
-  return function(exports) {
-    if (exports.OAuth == null) {
-      exports.OAuth = {
-        initialize: function(public_key, options) {
-          var i;
-          config.key = public_key;
-          if (options) {
-            for (i in options) {
-              config.options[i] = options[i];
-            }
-          }
-        },
-        setOAuthdURL: function(url) {
-          config.oauthd_url = url;
-          config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
-        },
-        getVersion: function() {
-          return config.version;
-        },
-        create: function(provider, tokens, request) {
-          var i, make_res, make_res_endpoint, res;
-          if (!tokens) {
-            return cache.tryCache(exports.OAuth, provider, true);
-          }
-          if (typeof request !== "object") {
-            providers_api.fetchDescription(provider);
-          }
-          make_res = function(method) {
-            return oauthio.request.mkHttp(provider, tokens, request, method);
-          };
-          make_res_endpoint = function(method, url) {
-            return oauthio.request.mkHttpEndpoint(provider, tokens, request, method, url);
-          };
-          res = {};
-          for (i in tokens) {
-            res[i] = tokens[i];
-          }
-          res.get = make_res("GET");
-          res.post = make_res("POST");
-          res.put = make_res("PUT");
-          res.patch = make_res("PATCH");
-          res.del = make_res("DELETE");
-          res.me = oauthio.request.mkHttpMe(provider, tokens, request, "GET");
-          return res;
-        },
-        popup: function(provider, opts, callback) {
-          var defer, frm, getMessage, gotmessage, interval, res, url, wnd, wndTimeout, wnd_options, wnd_settings;
-          gotmessage = false;
-          getMessage = function(e) {
-            if (e.origin !== config.oauthd_base) {
-              return;
-            }
-            try {
-              wnd.close();
-            } catch (_error) {}
-            opts.data = e.data;
-            oauthio.request.sendCallback(opts, defer);
-            return gotmessage = true;
-          };
-          wnd = void 0;
-          frm = void 0;
-          wndTimeout = void 0;
-          defer = $.Deferred();
-          opts = opts || {};
-          if (!config.key) {
-            if (defer != null) {
-              defer.reject(new Error("OAuth object must be initialized"));
-            }
-            if (callback == null) {
-              return defer.promise();
-            } else {
-              return callback(new Error("OAuth object must be initialized"));
-            }
-          }
-          if (arguments.length === 2 && typeof opts === 'function') {
-            callback = opts;
-            opts = {};
-          }
-          if (cache.cacheEnabled(opts.cache)) {
-            res = cache.tryCache(exports.OAuth, provider, opts.cache);
-            if (res) {
-              if (defer != null) {
-                defer.resolve(res);
-              }
-              if (callback) {
-                return callback(null, res);
-              } else {
-                return defer.promise();
-              }
-            }
-          }
-          if (!opts.state) {
-            opts.state = sha1.create_hash();
-            opts.state_type = "client";
-          }
-          client_states.push(opts.state);
-          url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key;
-          url += "&d=" + encodeURIComponent(Url.getAbsUrl("/"));
-          if (opts) {
-            url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
-          }
-          if (opts.wnd_settings) {
-            wnd_settings = opts.wnd_settings;
-            delete opts.wnd_settings;
-          } else {
-            wnd_settings = {
-              width: Math.floor(window.outerWidth * 0.8),
-              height: Math.floor(window.outerHeight * 0.5)
-            };
-          }
-          if (wnd_settings.height == null) {
-            wnd_settings.height = (wnd_settings.height < 350 ? 350 : void 0);
-          }
-          if (wnd_settings.width == null) {
-            wnd_settings.width = (wnd_settings.width < 800 ? 800 : void 0);
-          }
-          if (wnd_settings.left == null) {
-            wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2;
-          }
-          if (wnd_settings.top == null) {
-            wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8;
-          }
-          wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height;
-          wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0";
-          wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top;
-          opts = {
-            provider: provider,
-            cache: opts.cache
-          };
-          opts.callback = function(e, r) {
-            if (window.removeEventListener) {
-              window.removeEventListener("message", getMessage, false);
-            } else if (window.detachEvent) {
-              window.detachEvent("onmessage", getMessage);
-            } else {
-              if (document.detachEvent) {
-                document.detachEvent("onmessage", getMessage);
-              }
-            }
-            opts.callback = function() {};
-            if (wndTimeout) {
-              clearTimeout(wndTimeout);
-              wndTimeout = undefined;
-            }
-            if (callback) {
-              return callback(e, r);
-            } else {
-              return undefined;
-            }
-          };
-          if (window.attachEvent) {
-            window.attachEvent("onmessage", getMessage);
-          } else if (document.attachEvent) {
-            document.attachEvent("onmessage", getMessage);
-          } else {
-            if (window.addEventListener) {
-              window.addEventListener("message", getMessage, false);
-            }
-          }
-          if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessageExternal) {
-            chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
-              request.origin = sender.url.match(/^.{2,5}:\/\/[^/]+/)[0];
-              if (defer != null) {
-                defer.resolve();
-              }
-              return getMessage(request);
-            });
-          }
-          if (!frm && (navigator.userAgent.indexOf("MSIE") !== -1 || navigator.appVersion.indexOf("Trident/") > 0)) {
-            frm = document.createElement("iframe");
-            frm.src = config.oauthd_url + "/auth/iframe?d=" + encodeURIComponent(Url.getAbsUrl("/"));
-            frm.width = 0;
-            frm.height = 0;
-            frm.frameBorder = 0;
-            frm.style.visibility = "hidden";
-            document.body.appendChild(frm);
-          }
-          wndTimeout = setTimeout(function() {
-            if (defer != null) {
-              defer.reject(new Error("Authorization timed out"));
-            }
-            if (opts.callback && typeof opts.callback === "function") {
-              opts.callback(new Error("Authorization timed out"));
-            }
-            try {
-              wnd.close();
-            } catch (_error) {}
-          }, 1200 * 1000);
-          wnd = window.open(url, "Authorization", wnd_options);
-          if (wnd) {
-            wnd.focus();
-            interval = window.setInterval(function() {
-              if (wnd === null || wnd.closed) {
-                window.clearInterval(interval);
-                if (!gotmessage) {
-                  if (defer != null) {
-                    defer.reject(new Error("The popup was closed"));
-                  }
-                  if (opts.callback && typeof opts.callback === "function") {
-                    return opts.callback(new Error("The popup was closed"));
-                  }
-                }
-              }
-            }, 500);
-          } else {
-            if (defer != null) {
-              defer.reject(new Error("Could not open a popup"));
-            }
-            if (opts.callback && typeof opts.callback === "function") {
-              opts.callback(new Error("Could not open a popup"));
-            }
-          }
-          return defer != null ? defer.promise() : void 0;
-        },
-        redirect: function(provider, opts, url) {
-          var redirect_uri, res;
-          if (arguments.length === 2) {
-            url = opts;
-            opts = {};
-          }
-          if (cache.cacheEnabled(opts.cache)) {
-            res = cache.tryCache(exports.OAuth, provider, opts.cache);
-            if (res) {
-              url = Url.getAbsUrl(url) + (url.indexOf("#") === -1 ? "#" : "&") + "oauthio=cache";
-              window.location_operations.changeHref(url);
-              window.location_operations.reload();
-              return;
-            }
-          }
-          if (!opts.state) {
-            opts.state = sha1.create_hash();
-            opts.state_type = "client";
-          }
-          cookies.createCookie("oauthio_state", opts.state);
-          redirect_uri = encodeURIComponent(Url.getAbsUrl(url));
-          url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key;
-          url += "&redirect_uri=" + redirect_uri;
-          if (opts) {
-            url += "&opts=" + encodeURIComponent(JSON.stringify(opts));
-          }
-          window.location_operations.changeHref(url);
-        },
-        callback: function(provider, opts, callback) {
-          var defer, res;
-          defer = $.Deferred();
-          if (arguments.length === 1 && typeof provider === "function") {
-            callback = provider;
-            provider = undefined;
-            opts = {};
-          }
-          if (arguments.length === 1 && typeof provider === "string") {
-            opts = {};
-          }
-          if (arguments.length === 2 && typeof opts === "function") {
-            callback = opts;
-            opts = {};
-          }
-          if (cache.cacheEnabled(opts.cache) || oauth_result === "cache") {
-            res = cache.tryCache(exports.OAuth, provider, opts.cache);
-            if (oauth_result === "cache" && (typeof provider !== "string" || !provider)) {
-              if (defer != null) {
-                defer.reject(new Error("You must set a provider when using the cache"));
-              }
-              if (callback) {
-                return callback(new Error("You must set a provider when using the cache"));
-              } else {
-                return defer != null ? defer.promise() : void 0;
-              }
-            }
-            if (res) {
-              if (callback) {
-                if (res) {
-                  return callback(null, res);
-                }
-              } else {
-                if (defer != null) {
-                  defer.resolve(res);
-                }
-                return defer != null ? defer.promise() : void 0;
-              }
-            }
-          }
-          if (!oauth_result) {
-            return;
-          }
-          oauthio.request.sendCallback({
-            data: oauth_result,
-            provider: provider,
-            cache: opts.cache,
-            callback: callback
-          }, defer);
-          return defer != null ? defer.promise() : void 0;
-        },
-        clearCache: function(provider) {
-          cookies.eraseCookie("oauthio_provider_" + provider);
-        },
-        http_me: function(opts) {
-          if (oauthio.request.http_me) {
-            oauthio.request.http_me(opts);
-          }
-        },
-        http: function(opts) {
-          if (oauthio.request.http) {
-            oauthio.request.http(opts);
-          }
-        }
-      };
-    }
-  };
+  return providers_api;
 };
 
-},{"../config":1,"../tools/cache":5,"../tools/cookies":6,"../tools/sha1":8,"../tools/url":9,"./oauthio_requests":3}],3:[function(require,module,exports){
+},{"../config":1}],6:[function(require,module,exports){
+"use strict";
 var Url,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 Url = require('../tools/url')();
 
-module.exports = function($, config, client_states, cache, providers_api) {
+module.exports = function(oio, client_states, providers_api) {
+  var $, cache, config;
+  $ = oio.getJquery();
+  config = oio.getConfig();
+  cache = oio.getCache();
   return {
     http: function(opts) {
       var defer, desc_opts, doRequest, i, options;
@@ -650,6 +760,7 @@ module.exports = function($, config, client_states, cache, providers_api) {
         }
       }
       data.state = data.state.replace(/\s+/g, "");
+      console.log(client_states);
       for (k in client_states) {
         v = client_states[k];
         client_states[k] = v.replace(/\s+/g, "");
@@ -714,16 +825,75 @@ module.exports = function($, config, client_states, cache, providers_api) {
   };
 };
 
-},{"../tools/url":9}],4:[function(require,module,exports){
-var OAuth_creator, jquery;
+},{"../tools/url":14}],7:[function(require,module,exports){
+"use strict";
+module.exports = function(oio) {
+  return {
+    signup: function(email, username, password, firstname, lastname, data, callback) {
+      var cb;
+      if (typeof email !== 'string' && (typeof username === 'function' || typeof password === 'function')) {
+        cb = typeof username === 'function' ? username : password;
+        return oio.API.post('/signup?public_key=' + this.pubKey, {
+          access_token: email.access_token,
+          provider: email.provider,
+          k: this.pubKey,
+          email: typeof username !== 'function' ? username : null
+        }, cb);
+      } else {
+        return oio.API.post('/signup?public_key=' + this.pubKey, {
+          username: username,
+          email: email,
+          password: password,
+          firstname: firstname,
+          lastname: lastname,
+          data: data
+        }, callback);
+      }
+    },
+    signin: function(email, password, callback) {
+      if (typeof email !== "string" && typeof password === 'function' && typeof callback === void 0) {
+        callback = password;
+        return oio.API.post('/signin?public_key=' + this.pubKey, {
+          access_token: email.access_token,
+          provider: email.provider,
+          k: this.pubKey
+        }, callback);
+      } else {
+        return oio.API.post('/signin?public_key=' + this.pubKey, {
+          email: email,
+          password: password
+        }, callback);
+      }
+    },
+    resetPassword: function(email, callback) {
+      return oio.API.post('/usermanagement/password/reset?public_key=' + this.pubKey, {
+        email: email
+      }, callback);
+    },
+    getIdentity: function() {
+      return oio.API.get('/usermanagement/user?public_key=' + this.pubKey, null, function(err, data) {
+        return new UserObject(data);
+      });
+    },
+    isLogged: function() {}
+  };
+};
+
+},{}],8:[function(require,module,exports){
+var jquery;
 
 jquery = require('./tools/jquery-lite.js');
 
-OAuth_creator = require('./lib/oauth')(window, document, jquery, navigator);
+window.oio = require('./lib/core')(window, document, jquery, navigator);
 
-OAuth_creator(window || this);
+window.oio.extend('OAuth', require('./lib/oauth'));
 
-},{"./lib/oauth":2,"./tools/jquery-lite.js":7}],5:[function(require,module,exports){
+window.oio.extend('API', require('./lib/api'));
+
+window.oio.extend('User', require('./lib/user'));
+
+},{"./lib/api":2,"./lib/core":3,"./lib/oauth":4,"./lib/user":7,"./tools/jquery-lite.js":11}],9:[function(require,module,exports){
+"use strict";
 module.exports = {
   init: function(cookies_module, config) {
     this.config = config;
@@ -768,9 +938,8 @@ module.exports = {
   }
 };
 
-},{}],6:[function(require,module,exports){
-
-/* istanbul ignore next */
+},{}],10:[function(require,module,exports){
+"use strict";
 module.exports = {
   init: function(config, document) {
     this.config = config;
@@ -809,9 +978,9 @@ module.exports = {
   }
 };
 
-},{}],7:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
- * jQuery JavaScript Library v2.1.1 -attributes,-attributes/attr,-attributes/classes,-attributes/prop,-attributes/support,-attributes/val,-css/addGetHookIf,-css/curCSS,-css/defaultDisplay,-css/hiddenVisibleSelectors,-css/support,-css/swap,-css/var,-css/var/cssExpand,-css/var/getStyles,-css/var/isHidden,-css/var/rmargin,-css/var/rnumnonpx,-css,-effects,-effects/Tween,-effects/animatedSelector,-dimensions,-offset,-data/var/data_user,-deprecated,-event/alias,-event/support,-intro,-manipulation/_evalUrl,-manipulation/support,-manipulation/var,-manipulation/var/rcheckableType,-manipulation,-outro,-queue,-queue/delay,-selector-native,-selector-sizzle,-sizzle/dist,-sizzle/dist/sizzle,-sizzle/dist/min,-sizzle/test,-sizzle/test/jquery,-traversing,-traversing/findFilter,-traversing/var/rneedsContext,-traversing/var,-wrap,-exports,-exports/amd
+ * jQuery JavaScript Library v2.1.2-pre -attributes,-attributes/attr,-attributes/classes,-attributes/prop,-attributes/support,-attributes/val,-css/addGetHookIf,-css/curCSS,-css/defaultDisplay,-css/hiddenVisibleSelectors,-css/support,-css/swap,-css/var,-css/var/cssExpand,-css/var/getStyles,-css/var/isHidden,-css/var/rmargin,-css/var/rnumnonpx,-css,-effects,-effects/Tween,-effects/animatedSelector,-dimensions,-offset,-data/var/data_user,-deprecated,-event/alias,-event/support,-intro,-manipulation/_evalUrl,-manipulation/support,-manipulation/var,-manipulation/var/rcheckableType,-manipulation,-outro,-queue,-queue/delay,-selector-native,-selector-sizzle,-sizzle/dist,-sizzle/dist/sizzle,-sizzle/test,-traversing,-traversing/findFilter,-traversing/var/rneedsContext,-traversing/var,-wrap,-exports,-exports/amd
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -821,19 +990,19 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-09-24T13:40Z
+ * Date: 2014-10-21T16:42Z
  */
 
 (function( global, factory ) {
 
 	if ( typeof module === "object" && typeof module.exports === "object" ) {
-		// For CommonJS and CommonJS-like environments where a proper window is present,
-		// execute the factory and get jQuery
-		// For environments that do not inherently posses a window with a document
-		// (such as Node.js), expose a jQuery-making factory as module.exports
-		// This accentuates the need for the creation of a real window
+		// For CommonJS and CommonJS-like environments where a proper `window`
+		// is present, execute the factory and get jQuery.
+		// For environments that do not have a `window` with a `document`
+		// (such as Node.js), expose a factory as module.exports.
+		// This accentuates the need for the creation of a real `window`.
 		// e.g. var jQuery = require("jquery")(window);
-		// See ticket #14549 for more info
+		// See ticket #14549 for more info.
 		module.exports = global.document ?
 			factory( global, true ) :
 			function( w ) {
@@ -849,12 +1018,11 @@ module.exports = {
 // Pass this if window is not defined yet
 }(typeof window !== "undefined" ? window : this, function( window, noGlobal ) {
 
-// Can't do this because several apps including ASP.NET trace
+// Support: Firefox 18+
+// Can't be in strict mode, several libs including ASP.NET trace
 // the stack via arguments.caller.callee and Firefox dies if
 // you try to trace through "use strict" call chains. (#13335)
-// Support: Firefox 18+
 //
-
 var arr = [];
 
 var slice = arr.slice;
@@ -879,7 +1047,7 @@ var
 	// Use the correct document accordingly with window argument (sandbox)
 	document = window.document,
 
-	version = "2.1.1 -attributes,-attributes/attr,-attributes/classes,-attributes/prop,-attributes/support,-attributes/val,-css/addGetHookIf,-css/curCSS,-css/defaultDisplay,-css/hiddenVisibleSelectors,-css/support,-css/swap,-css/var,-css/var/cssExpand,-css/var/getStyles,-css/var/isHidden,-css/var/rmargin,-css/var/rnumnonpx,-css,-effects,-effects/Tween,-effects/animatedSelector,-dimensions,-offset,-data/var/data_user,-deprecated,-event/alias,-event/support,-intro,-manipulation/_evalUrl,-manipulation/support,-manipulation/var,-manipulation/var/rcheckableType,-manipulation,-outro,-queue,-queue/delay,-selector-native,-selector-sizzle,-sizzle/dist,-sizzle/dist/sizzle,-sizzle/dist/min,-sizzle/test,-sizzle/test/jquery,-traversing,-traversing/findFilter,-traversing/var/rneedsContext,-traversing/var,-wrap,-exports,-exports/amd",
+	version = "2.1.2-pre -attributes,-attributes/attr,-attributes/classes,-attributes/prop,-attributes/support,-attributes/val,-css/addGetHookIf,-css/curCSS,-css/defaultDisplay,-css/hiddenVisibleSelectors,-css/support,-css/swap,-css/var,-css/var/cssExpand,-css/var/getStyles,-css/var/isHidden,-css/var/rmargin,-css/var/rnumnonpx,-css,-effects,-effects/Tween,-effects/animatedSelector,-dimensions,-offset,-data/var/data_user,-deprecated,-event/alias,-event/support,-intro,-manipulation/_evalUrl,-manipulation/support,-manipulation/var,-manipulation/var/rcheckableType,-manipulation,-outro,-queue,-queue/delay,-selector-native,-selector-sizzle,-sizzle/dist,-sizzle/dist/sizzle,-sizzle/test,-traversing,-traversing/findFilter,-traversing/var/rneedsContext,-traversing/var,-wrap,-exports,-exports/amd",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -997,7 +1165,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 	if ( typeof target === "boolean" ) {
 		deep = target;
 
-		// skip the boolean and the target
+		// Skip the boolean and the target
 		target = arguments[ i ] || {};
 		i++;
 	}
@@ -1007,7 +1175,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 		target = {};
 	}
 
-	// extend jQuery itself if only one argument is passed
+	// Extend jQuery itself if only one argument is passed
 	if ( i === length ) {
 		target = this;
 		i--;
@@ -1027,7 +1195,9 @@ jQuery.extend = jQuery.fn.extend = function() {
 				}
 
 				// Recurse if we're merging plain objects or arrays
-				if ( deep && copy && ( jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)) ) ) {
+				if ( deep && copy && ( jQuery.isPlainObject(copy) ||
+					(copyIsArray = jQuery.isArray(copy)) ) ) {
+
 					if ( copyIsArray ) {
 						copyIsArray = false;
 						clone = src && jQuery.isArray(src) ? src : [];
@@ -1064,9 +1234,6 @@ jQuery.extend({
 
 	noop: function() {},
 
-	// See test/unit/core.js for details concerning isFunction.
-	// Since version 1.3, DOM methods and functions like alert
-	// aren't supported. They return false on IE (#2968).
 	isFunction: function( obj ) {
 		return jQuery.type(obj) === "function";
 	},
@@ -1081,7 +1248,8 @@ jQuery.extend({
 		// parseFloat NaNs numeric-cast false positives (null|true|false|"")
 		// ...but misinterprets leading-number strings, particularly hex literals ("0x...")
 		// subtraction forces infinities to NaN
-		return !jQuery.isArray( obj ) && obj - parseFloat( obj ) >= 0;
+		// adding 1 corrects loss of precision from parseFloat (#15100)
+		return !jQuery.isArray( obj ) && (obj - parseFloat( obj ) + 1) >= 0;
 	},
 
 	isPlainObject: function( obj ) {
@@ -1115,7 +1283,7 @@ jQuery.extend({
 		if ( obj == null ) {
 			return obj + "";
 		}
-		// Support: Android < 4.0, iOS < 6 (functionish RegExp)
+		// Support: Android<4.0, iOS<6 (functionish RegExp)
 		return typeof obj === "object" || typeof obj === "function" ?
 			class2type[ toString.call(obj) ] || "object" :
 			typeof obj;
@@ -1123,28 +1291,14 @@ jQuery.extend({
 
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
-		var script,
-			indirect = eval;
+		var script = document.createElement( "script" );
 
-		code = jQuery.trim( code );
-
-		if ( code ) {
-			// If the code includes a valid, prologue position
-			// strict mode pragma, execute code by injecting a
-			// script tag into the document.
-			if ( code.indexOf("use strict") === 1 ) {
-				script = document.createElement("script");
-				script.text = code;
-				document.head.appendChild( script ).parentNode.removeChild( script );
-			} else {
-			// Otherwise, avoid the DOM node creation, insertion
-			// and removal by using an indirect global eval
-				indirect( code );
-			}
-		}
+		script.text = code;
+		document.head.appendChild( script ).parentNode.removeChild( script );
 	},
 
 	// Convert dashed to camelCase; used by the css and data modules
+	// Support: IE9-11+
 	// Microsoft forgot to hump their vendor prefix (#9572)
 	camelCase: function( string ) {
 		return string.replace( rmsPrefix, "ms-" ).replace( rdashAlpha, fcamelCase );
@@ -1339,7 +1493,8 @@ jQuery.extend({
 });
 
 // Populate the class2type map
-jQuery.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function(i, name) {
+jQuery.each("Boolean Number String Function Array Date RegExp Object Error".split(" "),
+function(i, name) {
 	class2type[ "[object " + name + "]" ] = name.toLowerCase();
 });
 
@@ -1382,7 +1537,10 @@ var rootjQuery,
 
 		// Handle HTML strings
 		if ( typeof selector === "string" ) {
-			if ( selector[0] === "<" && selector[ selector.length - 1 ] === ">" && selector.length >= 3 ) {
+			if ( selector[0] === "<" &&
+				selector[ selector.length - 1 ] === ">" &&
+				selector.length >= 3 ) {
+
 				// Assume that strings that start and end with <> are HTML and skip the regex check
 				match = [ null, selector, null ];
 
@@ -1397,7 +1555,7 @@ var rootjQuery,
 				if ( match[1] ) {
 					context = context instanceof jQuery ? context[0] : context;
 
-					// scripts is true for back-compat
+					// Option to run scripts is true for back-compat
 					// Intentionally let the error be thrown if parseHTML is not present
 					jQuery.merge( this, jQuery.parseHTML(
 						match[1],
@@ -1425,8 +1583,8 @@ var rootjQuery,
 				} else {
 					elem = document.getElementById( match[2] );
 
-					// Check parentNode to catch when Blackberry 4.6 returns
-					// nodes that are no longer in the document #6963
+					// Support: Blackberry 4.6
+					// gEBID returns nodes no longer in the document (#6963)
 					if ( elem && elem.parentNode ) {
 						// Inject the element directly into the jQuery object
 						this.length = 1;
@@ -1457,7 +1615,7 @@ var rootjQuery,
 		// HANDLE: $(function)
 		// Shortcut for document ready
 		} else if ( jQuery.isFunction( selector ) ) {
-			return typeof rootjQuery.ready !== "undefined" ?
+			return rootjQuery.ready !== undefined ?
 				rootjQuery.ready( selector ) :
 				// Execute immediately if ready is not present
 				selector( jQuery );
@@ -1547,7 +1705,9 @@ jQuery.Callbacks = function( options ) {
 			firingLength = list.length;
 			firing = true;
 			for ( ; list && firingIndex < firingLength; firingIndex++ ) {
-				if ( list[ firingIndex ].apply( data[ 0 ], data[ 1 ] ) === false && options.stopOnFalse ) {
+				if ( list[ firingIndex ].apply( data[ 0 ], data[ 1 ] ) === false &&
+					options.stopOnFalse ) {
+
 					memory = false; // To prevent further calls using add
 					break;
 				}
@@ -1711,7 +1871,10 @@ jQuery.extend({
 										.fail( newDefer.reject )
 										.progress( newDefer.notify );
 								} else {
-									newDefer[ tuple[ 0 ] + "With" ]( this === promise ? newDefer.promise() : this, fn ? [ returned ] : arguments );
+									newDefer[ tuple[ 0 ] + "With" ](
+										this === promise ? newDefer.promise() : this,
+										fn ? [ returned ] : arguments
+									);
 								}
 							});
 						});
@@ -1774,9 +1937,11 @@ jQuery.extend({
 			length = resolveValues.length,
 
 			// the count of uncompleted subordinates
-			remaining = length !== 1 || ( subordinate && jQuery.isFunction( subordinate.promise ) ) ? length : 0,
+			remaining = length !== 1 ||
+				( subordinate && jQuery.isFunction( subordinate.promise ) ) ? length : 0,
 
-			// the master Deferred. If resolveValues consist of only a single Deferred, just use that.
+			// the master Deferred.
+			// If resolveValues consist of only a single Deferred, just use that.
 			deferred = remaining === 1 ? subordinate : jQuery.Deferred(),
 
 			// Update function for both resolve and progress values
@@ -1794,7 +1959,7 @@ jQuery.extend({
 
 			progressValues, progressContexts, resolveContexts;
 
-		// add listeners to Deferred subordinates; treat others as resolved
+		// Add listeners to Deferred subordinates; treat others as resolved
 		if ( length > 1 ) {
 			progressValues = new Array( length );
 			progressContexts = new Array( length );
@@ -1811,7 +1976,7 @@ jQuery.extend({
 			}
 		}
 
-		// if we're not waiting on anything, resolve the master
+		// If we're not waiting on anything, resolve the master
 		if ( !remaining ) {
 			deferred.resolveWith( resolveContexts, resolveValues );
 		}
@@ -1889,8 +2054,10 @@ jQuery.ready.promise = function( obj ) {
 
 		readyList = jQuery.Deferred();
 
-		// Catch cases where $(document).ready() is called after the browser event has already occurred.
-		// we once tried to use readyState "interactive" here, but it caused issues like the one
+		// Catch cases where $(document).ready() is called
+		// after the browser event has already occurred.
+		// We once tried to use readyState "interactive" here,
+		// but it caused issues like the one
 		// discovered by ChrisS here: http://bugs.jquery.com/ticket/12282#comment:15
 		if ( document.readyState === "complete" ) {
 			// Handle it asynchronously to allow scripts the opportunity to delay ready
@@ -1925,7 +2092,7 @@ var access = jQuery.access = function( elems, fn, key, value, chainable, emptyGe
 	if ( jQuery.type( key ) === "object" ) {
 		chainable = true;
 		for ( i in key ) {
-			jQuery.access( elems, fn, i, key[i], true, emptyGet, raw );
+			access( elems, fn, i, key[i], true, emptyGet, raw );
 		}
 
 	// Sets one value
@@ -1984,7 +2151,7 @@ jQuery.acceptData = function( owner ) {
 
 
 function Data() {
-	// Support: Android < 4,
+	// Support: Android<4,
 	// Old WebKit does not have Object.preventExtensions/freeze method,
 	// return new empty object instead with no [[set]] accessor
 	Object.defineProperty( this.cache = {}, 0, {
@@ -1993,7 +2160,7 @@ function Data() {
 		}
 	});
 
-	this.expando = jQuery.expando + Math.random();
+	this.expando = jQuery.expando + Data.uid++;
 }
 
 Data.uid = 1;
@@ -2021,7 +2188,7 @@ Data.prototype = {
 				descriptor[ this.expando ] = { value: unlock };
 				Object.defineProperties( owner, descriptor );
 
-			// Support: Android < 4
+			// Support: Android<4
 			// Fallback to a less secure definition
 			} catch ( e ) {
 				descriptor[ this.expando ] = unlock;
@@ -2155,21 +2322,22 @@ Data.prototype = {
 		}
 	}
 };
-var data_priv = new Data();
+var dataPriv = new Data();
+
+var dataUser = new Data();
 
 
 
-/*
-	Implementation Summary
+//	Implementation Summary
+//
+//	1. Enforce API surface and semantic compatibility with 1.9.x branch
+//	2. Improve the module's maintainability by reducing the storage
+//		paths to a single mechanism.
+//	3. Use the same single mechanism to support "private" and "user" data.
+//	4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
+//	5. Avoid exposing implementation details on user objects (eg. expando properties)
+//	6. Provide a clear path for implementation upgrade to WeakMap in 2014
 
-	1. Enforce API surface and semantic compatibility with 1.9.x branch
-	2. Improve the module's maintainability by reducing the storage
-		paths to a single mechanism.
-	3. Use the same single mechanism to support "private" and "user" data.
-	4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
-	5. Avoid exposing implementation details on user objects (eg. expando properties)
-	6. Provide a clear path for implementation upgrade to WeakMap in 2014
-*/
 var rbrace = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
 	rmultiDash = /([A-Z])/g;
 
@@ -2191,10 +2359,10 @@ function dataAttr( elem, key, data ) {
 					+data + "" === data ? +data :
 					rbrace.test( data ) ? jQuery.parseJSON( data ) :
 					data;
-			} catch( e ) {}
+			} catch ( e ) {}
 
 			// Make sure we set the data so it isn't changed later
-			data_user.set( elem, key, data );
+			dataUser.set( elem, key, data );
 		} else {
 			data = undefined;
 		}
@@ -2204,25 +2372,25 @@ function dataAttr( elem, key, data ) {
 
 jQuery.extend({
 	hasData: function( elem ) {
-		return data_user.hasData( elem ) || data_priv.hasData( elem );
+		return dataUser.hasData( elem ) || dataPriv.hasData( elem );
 	},
 
 	data: function( elem, name, data ) {
-		return data_user.access( elem, name, data );
+		return dataUser.access( elem, name, data );
 	},
 
 	removeData: function( elem, name ) {
-		data_user.remove( elem, name );
+		dataUser.remove( elem, name );
 	},
 
 	// TODO: Now that all calls to _data and _removeData have been replaced
-	// with direct calls to data_priv methods, these can be deprecated.
+	// with direct calls to dataPriv methods, these can be deprecated.
 	_data: function( elem, name, data ) {
-		return data_priv.access( elem, name, data );
+		return dataPriv.access( elem, name, data );
 	},
 
 	_removeData: function( elem, name ) {
-		data_priv.remove( elem, name );
+		dataPriv.remove( elem, name );
 	}
 });
 
@@ -2235,9 +2403,9 @@ jQuery.fn.extend({
 		// Gets all values
 		if ( key === undefined ) {
 			if ( this.length ) {
-				data = data_user.get( elem );
+				data = dataUser.get( elem );
 
-				if ( elem.nodeType === 1 && !data_priv.get( elem, "hasDataAttrs" ) ) {
+				if ( elem.nodeType === 1 && !dataPriv.get( elem, "hasDataAttrs" ) ) {
 					i = attrs.length;
 					while ( i-- ) {
 
@@ -2251,7 +2419,7 @@ jQuery.fn.extend({
 							}
 						}
 					}
-					data_priv.set( elem, "hasDataAttrs", true );
+					dataPriv.set( elem, "hasDataAttrs", true );
 				}
 			}
 
@@ -2261,7 +2429,7 @@ jQuery.fn.extend({
 		// Sets multiple values
 		if ( typeof key === "object" ) {
 			return this.each(function() {
-				data_user.set( this, key );
+				dataUser.set( this, key );
 			});
 		}
 
@@ -2277,14 +2445,14 @@ jQuery.fn.extend({
 			if ( elem && value === undefined ) {
 				// Attempt to get data from the cache
 				// with the key as-is
-				data = data_user.get( elem, key );
+				data = dataUser.get( elem, key );
 				if ( data !== undefined ) {
 					return data;
 				}
 
 				// Attempt to get data from the cache
 				// with the key camelized
-				data = data_user.get( elem, camelKey );
+				data = dataUser.get( elem, camelKey );
 				if ( data !== undefined ) {
 					return data;
 				}
@@ -2304,18 +2472,18 @@ jQuery.fn.extend({
 			this.each(function() {
 				// First, attempt to store a copy or reference of any
 				// data that might've been store with a camelCased key.
-				var data = data_user.get( this, camelKey );
+				var data = dataUser.get( this, camelKey );
 
 				// For HTML5 data-* attribute interop, we have to
 				// store property names with dashes in a camelCase form.
 				// This might not apply to all properties...*
-				data_user.set( this, camelKey, value );
+				dataUser.set( this, camelKey, value );
 
 				// *... In the case of properties that might _actually_
 				// have dashes, we need to also store a copy of that
 				// unchanged property.
 				if ( key.indexOf("-") !== -1 && data !== undefined ) {
-					data_user.set( this, key, value );
+					dataUser.set( this, key, value );
 				}
 			});
 		}, null, value, arguments.length > 1, null, true );
@@ -2323,13 +2491,11 @@ jQuery.fn.extend({
 
 	removeData: function( key ) {
 		return this.each(function() {
-			data_user.remove( this, key );
+			dataUser.remove( this, key );
 		});
 	}
 });
 var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source;
-
-var strundefined = typeof undefined;
 
 
 
@@ -2366,7 +2532,7 @@ jQuery.event = {
 		var handleObjIn, eventHandle, tmp,
 			events, t, handleObj,
 			special, handlers, type, namespaces, origType,
-			elemData = data_priv.get( elem );
+			elemData = dataPriv.get( elem );
 
 		// Don't attach events to noData or text/comment nodes (but allow plain objects)
 		if ( !elemData ) {
@@ -2393,7 +2559,7 @@ jQuery.event = {
 			eventHandle = elemData.handle = function( e ) {
 				// Discard the second event of a jQuery.event.trigger() and
 				// when an event is called after a page has unloaded
-				return typeof jQuery !== strundefined && jQuery.event.triggered !== e.type ?
+				return typeof jQuery !== "undefined" && jQuery.event.triggered !== e.type ?
 					jQuery.event.dispatch.apply( elem, arguments ) : undefined;
 			};
 		}
@@ -2438,7 +2604,9 @@ jQuery.event = {
 				handlers.delegateCount = 0;
 
 				// Only use addEventListener if the special events handler returns false
-				if ( !special.setup || special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
+				if ( !special.setup ||
+					special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
+
 					if ( elem.addEventListener ) {
 						elem.addEventListener( type, eventHandle, false );
 					}
@@ -2472,7 +2640,7 @@ jQuery.event = {
 		var j, origCount, tmp,
 			events, t, handleObj,
 			special, handlers, type, namespaces, origType,
-			elemData = data_priv.hasData( elem ) && data_priv.get( elem );
+			elemData = dataPriv.hasData( elem ) && dataPriv.get( elem );
 
 		if ( !elemData || !(events = elemData.events) ) {
 			return;
@@ -2507,7 +2675,8 @@ jQuery.event = {
 				if ( ( mappedTypes || origType === handleObj.origType ) &&
 					( !handler || handler.guid === handleObj.guid ) &&
 					( !tmp || tmp.test( handleObj.namespace ) ) &&
-					( !selector || selector === handleObj.selector || selector === "**" && handleObj.selector ) ) {
+					( !selector || selector === handleObj.selector ||
+						selector === "**" && handleObj.selector ) ) {
 					handlers.splice( j, 1 );
 
 					if ( handleObj.selector ) {
@@ -2522,7 +2691,9 @@ jQuery.event = {
 			// Remove generic event handler if we removed something and no more handlers exist
 			// (avoids potential for endless recursion during removal of special event handlers)
 			if ( origCount && !handlers.length ) {
-				if ( !special.teardown || special.teardown.call( elem, namespaces, elemData.handle ) === false ) {
+				if ( !special.teardown ||
+					special.teardown.call( elem, namespaces, elemData.handle ) === false ) {
+
 					jQuery.removeEvent( elem, type, elemData.handle );
 				}
 
@@ -2533,7 +2704,7 @@ jQuery.event = {
 		// Remove the expando if it's no longer used
 		if ( jQuery.isEmptyObject( events ) ) {
 			delete elemData.handle;
-			data_priv.remove( elem, "events" );
+			dataPriv.remove( elem, "events" );
 		}
 	},
 
@@ -2572,7 +2743,7 @@ jQuery.event = {
 		// Trigger bitmask: & 1 for native handlers; & 2 for jQuery (always true)
 		event.isTrigger = onlyHandlers ? 2 : 3;
 		event.namespace = namespaces.join(".");
-		event.namespace_re = event.namespace ?
+		event.rnamespace = event.namespace ?
 			new RegExp( "(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)" ) :
 			null;
 
@@ -2621,7 +2792,8 @@ jQuery.event = {
 				special.bindType || type;
 
 			// jQuery handler
-			handle = ( data_priv.get( cur, "events" ) || {} )[ event.type ] && data_priv.get( cur, "handle" );
+			handle = ( dataPriv.get( cur, "events" ) || {} )[ event.type ] &&
+				dataPriv.get( cur, "handle" );
 			if ( handle ) {
 				handle.apply( cur, data );
 			}
@@ -2677,7 +2849,7 @@ jQuery.event = {
 		var i, j, ret, matched, handleObj,
 			handlerQueue = [],
 			args = slice.call( arguments ),
-			handlers = ( data_priv.get( this, "events" ) || {} )[ event.type ] || [],
+			handlers = ( dataPriv.get( this, "events" ) || {} )[ event.type ] || [],
 			special = jQuery.event.special[ event.type ] || {};
 
 		// Use the fix-ed jQuery.Event rather than the (read-only) native event
@@ -2698,17 +2870,18 @@ jQuery.event = {
 			event.currentTarget = matched.elem;
 
 			j = 0;
-			while ( (handleObj = matched.handlers[ j++ ]) && !event.isImmediatePropagationStopped() ) {
+			while ( (handleObj = matched.handlers[ j++ ]) &&
+				!event.isImmediatePropagationStopped() ) {
 
-				// Triggered event must either 1) have no namespace, or
-				// 2) have namespace(s) a subset or equal to those in the bound event (both can have no namespace).
-				if ( !event.namespace_re || event.namespace_re.test( handleObj.namespace ) ) {
+				// Triggered event must either 1) have no namespace, or 2) have namespace(s)
+				// a subset or equal to those in the bound event (both can have no namespace).
+				if ( !event.rnamespace || event.rnamespace.test( handleObj.namespace ) ) {
 
 					event.handleObj = handleObj;
 					event.data = handleObj.data;
 
-					ret = ( (jQuery.event.special[ handleObj.origType ] || {}).handle || handleObj.handler )
-							.apply( matched.elem, args );
+					ret = ( (jQuery.event.special[ handleObj.origType ] || {}).handle ||
+						handleObj.handler ).apply( matched.elem, args );
 
 					if ( ret !== undefined ) {
 						if ( (event.result = ret) === false ) {
@@ -2775,7 +2948,8 @@ jQuery.event = {
 	},
 
 	// Includes some event props shared by KeyEvent and MouseEvent
-	props: "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" "),
+	props: ( "altKey bubbles cancelable ctrlKey currentTarget eventPhase " +
+		"metaKey relatedTarget shiftKey target timeStamp view which" ).split(" "),
 
 	fixHooks: {},
 
@@ -2793,7 +2967,8 @@ jQuery.event = {
 	},
 
 	mouseHooks: {
-		props: "button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "),
+		props: ( "button buttons clientX clientY offsetX offsetY pageX pageY " +
+			"screenX screenY toElement" ).split(" "),
 		filter: function( event, original ) {
 			var eventDoc, doc, body,
 				button = original.button;
@@ -2804,8 +2979,12 @@ jQuery.event = {
 				doc = eventDoc.documentElement;
 				body = eventDoc.body;
 
-				event.pageX = original.clientX + ( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) - ( doc && doc.clientLeft || body && body.clientLeft || 0 );
-				event.pageY = original.clientY + ( doc && doc.scrollTop  || body && body.scrollTop  || 0 ) - ( doc && doc.clientTop  || body && body.clientTop  || 0 );
+				event.pageX = original.clientX +
+					( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) -
+					( doc && doc.clientLeft || body && body.clientLeft || 0 );
+				event.pageY = original.clientY +
+					( doc && doc.scrollTop  || body && body.scrollTop  || 0 ) -
+					( doc && doc.clientTop  || body && body.clientTop  || 0 );
 			}
 
 			// Add which for click: 1 === left; 2 === middle; 3 === right
@@ -2851,7 +3030,7 @@ jQuery.event = {
 			event.target = document;
 		}
 
-		// Support: Safari 6.0+, Chrome < 28
+		// Support: Safari 6.0+, Chrome<28
 		// Target should not be a text node (#504, #13143)
 		if ( event.target.nodeType === 3 ) {
 			event.target = event.target.parentNode;
@@ -2956,7 +3135,7 @@ jQuery.Event = function( src, props ) {
 		// by a handler lower down the tree; reflect the correct value.
 		this.isDefaultPrevented = src.defaultPrevented ||
 				src.defaultPrevented === undefined &&
-				// Support: Android < 4.0
+				// Support: Android<4.0
 				src.returnValue === false ?
 			returnTrue :
 			returnFalse;
@@ -2981,6 +3160,7 @@ jQuery.Event = function( src, props ) {
 // jQuery.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
 // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
 jQuery.Event.prototype = {
+	constructor: jQuery.Event,
 	isDefaultPrevented: returnFalse,
 	isPropagationStopped: returnFalse,
 	isImmediatePropagationStopped: returnFalse,
@@ -3046,8 +3226,8 @@ jQuery.each({
 	};
 });
 
-// Create "bubbling" focus and blur events
 // Support: Firefox, Chrome, Safari
+// Create "bubbling" focus and blur events
 if ( !support.focusinBubbles ) {
 	jQuery.each({ focus: "focusin", blur: "focusout" }, function( orig, fix ) {
 
@@ -3059,23 +3239,23 @@ if ( !support.focusinBubbles ) {
 		jQuery.event.special[ fix ] = {
 			setup: function() {
 				var doc = this.ownerDocument || this,
-					attaches = data_priv.access( doc, fix );
+					attaches = dataPriv.access( doc, fix );
 
 				if ( !attaches ) {
 					doc.addEventListener( orig, handler, true );
 				}
-				data_priv.access( doc, fix, ( attaches || 0 ) + 1 );
+				dataPriv.access( doc, fix, ( attaches || 0 ) + 1 );
 			},
 			teardown: function() {
 				var doc = this.ownerDocument || this,
-					attaches = data_priv.access( doc, fix ) - 1;
+					attaches = dataPriv.access( doc, fix ) - 1;
 
 				if ( !attaches ) {
 					doc.removeEventListener( orig, handler, true );
-					data_priv.remove( doc, fix );
+					dataPriv.remove( doc, fix );
 
 				} else {
-					data_priv.access( doc, fix, attaches );
+					dataPriv.access( doc, fix, attaches );
 				}
 			}
 		};
@@ -3146,7 +3326,9 @@ jQuery.fn.extend({
 			// ( event )  dispatched jQuery.Event
 			handleObj = types.handleObj;
 			jQuery( types.delegateTarget ).off(
-				handleObj.namespace ? handleObj.origType + "." + handleObj.namespace : handleObj.origType,
+				handleObj.namespace ?
+					handleObj.origType + "." + handleObj.namespace :
+					handleObj.origType,
 				handleObj.selector,
 				handleObj.handler
 			);
@@ -3220,10 +3402,6 @@ jQuery.parseXML = function( data ) {
 
 
 var
-	// Document location
-	ajaxLocParts,
-	ajaxLocation,
-
 	rhash = /#.*$/,
 	rts = /([?&])_=[^&]*/,
 	rheaders = /^(.*?):[ \t]*([^\r\n]*)$/mg,
@@ -3252,22 +3430,13 @@ var
 	transports = {},
 
 	// Avoid comment-prolog char sequence (#10098); must appease lint and evade compression
-	allTypes = "*/".concat("*");
+	allTypes = "*/".concat( "*" ),
 
-// #8138, IE may throw an exception when accessing
-// a field from window.location if document.domain has been set
-try {
-	ajaxLocation = location.href;
-} catch( e ) {
-	// Use the href attribute of an A element
-	// since IE will modify it given document.location
-	ajaxLocation = document.createElement( "a" );
-	ajaxLocation.href = "";
-	ajaxLocation = ajaxLocation.href;
-}
+	// Document location
+	ajaxLocation = location.href,
 
-// Segment location into parts
-ajaxLocParts = rurl.exec( ajaxLocation.toLowerCase() ) || [];
+	// Segment location into parts
+	ajaxLocParts = rurl.exec( ajaxLocation.toLowerCase() ) || [];
 
 // Base "constructor" for jQuery.ajaxPrefilter and jQuery.ajaxTransport
 function addToPrefiltersOrTransports( structure ) {
@@ -3312,7 +3481,9 @@ function inspectPrefiltersOrTransports( structure, options, originalOptions, jqX
 		inspected[ dataType ] = true;
 		jQuery.each( structure[ dataType ] || [], function( _, prefilterOrFactory ) {
 			var dataTypeOrTransport = prefilterOrFactory( options, originalOptions, jqXHR );
-			if ( typeof dataTypeOrTransport === "string" && !seekingTransport && !inspected[ dataTypeOrTransport ] ) {
+			if ( typeof dataTypeOrTransport === "string" &&
+				!seekingTransport && !inspected[ dataTypeOrTransport ] ) {
+
 				options.dataTypes.unshift( dataTypeOrTransport );
 				inspect( dataTypeOrTransport );
 				return false;
@@ -3485,7 +3656,10 @@ function ajaxConvert( s, response, jqXHR, isSuccess ) {
 						try {
 							response = conv( response );
 						} catch ( e ) {
-							return { state: "parsererror", error: conv ? e : "No conversion from " + prev + " to " + current };
+							return {
+								state: "parsererror",
+								error: conv ? e : "No conversion from " + prev + " to " + current
+							};
 						}
 					}
 				}
@@ -3619,9 +3793,10 @@ jQuery.extend({
 			// Callbacks context
 			callbackContext = s.context || s,
 			// Context for global events is callbackContext if it is a DOM node or jQuery collection
-			globalEventContext = s.context && ( callbackContext.nodeType || callbackContext.jquery ) ?
-				jQuery( callbackContext ) :
-				jQuery.event,
+			globalEventContext = s.context &&
+				( callbackContext.nodeType || callbackContext.jquery ) ?
+					jQuery( callbackContext ) :
+					jQuery.event,
 			// Deferreds
 			deferred = jQuery.Deferred(),
 			completeDeferred = jQuery.Callbacks("once memory"),
@@ -3746,7 +3921,8 @@ jQuery.extend({
 		}
 
 		// We can fire global events as of now if asked to
-		fireGlobals = s.global;
+		// Don't fire events if jQuery.event is undefined in an AMD-usage scenario (#15118)
+		fireGlobals = jQuery.event && s.global;
 
 		// Watch for a new set of requests
 		if ( fireGlobals && jQuery.active++ === 0 ) {
@@ -3804,7 +3980,8 @@ jQuery.extend({
 		jqXHR.setRequestHeader(
 			"Accept",
 			s.dataTypes[ 0 ] && s.accepts[ s.dataTypes[0] ] ?
-				s.accepts[ s.dataTypes[0] ] + ( s.dataTypes[ 0 ] !== "*" ? ", " + allTypes + "; q=0.01" : "" ) :
+				s.accepts[ s.dataTypes[0] ] +
+					( s.dataTypes[ 0 ] !== "*" ? ", " + allTypes + "; q=0.01" : "" ) :
 				s.accepts[ "*" ]
 		);
 
@@ -3814,12 +3991,14 @@ jQuery.extend({
 		}
 
 		// Allow custom headers/mimetypes and early abort
-		if ( s.beforeSend && ( s.beforeSend.call( callbackContext, jqXHR, s ) === false || state === 2 ) ) {
+		if ( s.beforeSend &&
+			( s.beforeSend.call( callbackContext, jqXHR, s ) === false || state === 2 ) ) {
+
 			// Abort if not done already and return
 			return jqXHR.abort();
 		}
 
-		// aborting is no longer a cancellation
+		// Aborting is no longer a cancellation
 		strAbort = "abort";
 
 		// Install callbacks on deferreds
@@ -3931,8 +4110,7 @@ jQuery.extend({
 					isSuccess = !error;
 				}
 			} else {
-				// We extract error from statusText
-				// then normalize statusText and status for non-aborts
+				// Extract error from statusText and normalize for non-aborts
 				error = statusText;
 				if ( status || !statusText ) {
 					statusText = "error";
@@ -3988,7 +4166,7 @@ jQuery.extend({
 
 jQuery.each( [ "get", "post" ], function( i, method ) {
 	jQuery[ method ] = function( url, data, callback, type ) {
-		// shift arguments if data argument was omitted
+		// Shift arguments if data argument was omitted
 		if ( jQuery.isFunction( data ) ) {
 			type = type || callback;
 			callback = data;
@@ -4002,13 +4180,6 @@ jQuery.each( [ "get", "post" ], function( i, method ) {
 			data: data,
 			success: callback
 		});
-	};
-});
-
-// Attach a bunch of functions for handling common AJAX events
-jQuery.each( [ "ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend" ], function( i, type ) {
-	jQuery.fn[ type ] = function( fn ) {
-		return this.on( type, fn );
 	};
 });
 
@@ -4031,7 +4202,12 @@ function buildParams( prefix, obj, traditional, add ) {
 
 			} else {
 				// Item is non-scalar (array or object), encode its numeric index.
-				buildParams( prefix + "[" + ( typeof v === "object" ? i : "" ) + "]", v, traditional, add );
+				buildParams(
+					prefix + "[" + ( typeof v === "object" ? i : "" ) + "]",
+					v,
+					traditional,
+					add
+				);
 			}
 		});
 
@@ -4118,7 +4294,7 @@ jQuery.fn.extend({
 jQuery.ajaxSettings.xhr = function() {
 	try {
 		return new XMLHttpRequest();
-	} catch( e ) {}
+	} catch ( e ) {}
 };
 
 var xhrId = 0,
@@ -4134,8 +4310,9 @@ var xhrId = 0,
 
 // Support: IE9
 // Open requests must be manually aborted on unload (#5280)
-if ( window.ActiveXObject ) {
-	jQuery( window ).on( "unload", function() {
+// See https://support.microsoft.com/kb/2856746 for more info
+if ( window.attachEvent ) {
+	window.attachEvent( "onunload", function() {
 		for ( var key in xhrCallbacks ) {
 			xhrCallbacks[ key ]();
 		}
@@ -4156,7 +4333,13 @@ jQuery.ajaxTransport(function( options ) {
 					xhr = options.xhr(),
 					id = ++xhrId;
 
-				xhr.open( options.type, options.url, options.async, options.username, options.password );
+				xhr.open(
+					options.type,
+					options.url,
+					options.async,
+					options.username,
+					options.password
+				);
 
 				// Apply custom fields if provided
 				if ( options.xhrFields ) {
@@ -4249,7 +4432,8 @@ jQuery.ajaxTransport(function( options ) {
 // Install script dataType
 jQuery.ajaxSetup({
 	accepts: {
-		script: "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"
+		script: "text/javascript, application/javascript, " +
+			"application/ecmascript, application/x-ecmascript"
 	},
 	contents: {
 		script: /(?:java|ecma)script/
@@ -4326,7 +4510,9 @@ jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 	var callbackName, overwritten, responseContainer,
 		jsonProp = s.jsonp !== false && ( rjsonp.test( s.url ) ?
 			"url" :
-			typeof s.data === "string" && !( s.contentType || "" ).indexOf("application/x-www-form-urlencoded") && rjsonp.test( s.data ) && "data"
+			typeof s.data === "string" &&
+				!( s.contentType || "" ).indexOf("application/x-www-form-urlencoded") &&
+				rjsonp.test( s.data ) && "data"
 		);
 
 	// Handle iff the expected data type is "jsonp" or we have a parameter to set
@@ -4392,7 +4578,8 @@ jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 
 
 // data: string of html
-// context (optional): If specified, the fragment will be created in this context, defaults to document
+// context (optional): If specified, the fragment will be created in this context,
+// defaults to document
 // keepScripts (optional): If true, will include scripts passed in the html string
 jQuery.parseHTML = function( data, context, keepScripts ) {
 	if ( !data || typeof data !== "string" ) {
@@ -4487,15 +4674,52 @@ jQuery.fn.load = function( url, params, callback ) {
 
 
 
+
+// Attach a bunch of functions for handling common AJAX events
+jQuery.each([
+	"ajaxStart",
+	"ajaxStop",
+	"ajaxComplete",
+	"ajaxError",
+	"ajaxSuccess",
+	"ajaxSend"
+], function( i, type ) {
+	jQuery.fn[ type ] = function( fn ) {
+		return this.on( type, fn );
+	};
+});
+
+
+
 jQuery.noConflict = function() {};
 
 
 
 return jQuery;
+
 return jQuery;
 }));
 
-},{}],8:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+"use strict";
+module.exports = function(document) {
+  return {
+    reload: function() {
+      return document.location.reload();
+    },
+    getHash: function() {
+      return document.location.hash;
+    },
+    setHash: function(newHash) {
+      return document.location.hash = newHash;
+    },
+    changeHref: function(newLocation) {
+      return document.location.href = newLocation;
+    }
+  };
+};
+
+},{}],13:[function(require,module,exports){
 var b64pad, hexcase;
 
 hexcase = 0;
@@ -4793,7 +5017,7 @@ module.exports = {
   }
 };
 
-},{}],9:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = function(document) {
   return {
     getAbsUrl: function(url) {
@@ -4824,4 +5048,4 @@ module.exports = function(document) {
   };
 };
 
-},{}]},{},[4])
+},{}]},{},[8])

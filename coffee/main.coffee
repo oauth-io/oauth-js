@@ -1,4 +1,8 @@
-jquery = require('./tools/jquery-lite.js')
+(->
+	jquery = require('./tools/jquery-lite.js')
 
-OAuth_creator = require('./lib/oauth') window, document, jquery, navigator
-OAuth_creator window or this
+	window.oio = require('./lib/core') window, document, jquery, navigator
+	window.oio.extend 'OAuth', require('./lib/oauth')
+	window.oio.extend 'API', require('./lib/api')
+	window.oio.extend 'User', require('./lib/user')
+)()
