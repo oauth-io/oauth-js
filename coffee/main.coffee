@@ -5,4 +5,5 @@
 	window.oio.extend 'OAuth', require('./lib/oauth')
 	window.oio.extend 'API', require('./lib/api')
 	window.oio.extend 'User', require('./lib/user')
+	window.OAuth = window.oio.OAuth
 )()

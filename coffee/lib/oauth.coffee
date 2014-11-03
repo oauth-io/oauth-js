@@ -34,9 +34,11 @@ module.exports = (oio) ->
 	location_operations = oio.getLocationOperations()
 	oauthio = request: oauthio_requests(oio, client_states, providers_api)
 
-	return {
+	oauth = {
+		initialize: (public_key, options) -> return oio.initialize public_key, options
+
 		create: (provider, tokens, request) ->
-			return cache.tryCache(exports.OAuth, provider, true)  unless tokens
+			return cache.tryCache(oauth, provider, true)  unless tokens
 			providers_api.fetchDescription provider  if typeof request isnt "object"
 			make_res = (method) ->
 				oauthio.request.mkHttp provider, tokens, request, method
@@ -80,7 +82,7 @@ module.exports = (oio) ->
 				callback = opts
 				opts = {}
 			if cache.cacheEnabled(opts.cache)
-				res = cache.tryCache(exports.OAuth, provider, opts.cache)
+				res = cache.tryCache(oauth, provider, opts.cache)
 				if res
 					defer?.resolve res
 					if callback
@@ -178,7 +180,7 @@ module.exports = (oio) ->
 				url = opts
 				opts = {}
 			if cache.cacheEnabled(opts.cache)
-				res = cache.tryCache(exports.OAuth, provider, opts.cache)
+				res = cache.tryCache(oauth, provider, opts.cache)
 				if res
 					url = Url.getAbsUrl(url) + ((if (url.indexOf("#") is -1) then "#" else "&")) + "oauthio=cache"
 					location_operations.changeHref url
@@ -207,7 +209,7 @@ module.exports = (oio) ->
 				callback = opts
 				opts = {}
 			if cache.cacheEnabled(opts.cache) or oauth_result is "cache"
-				res = cache.tryCache(exports.OAuth, provider, opts.cache)
+				res = cache.tryCache(oauth, provider, opts.cache)
 				if oauth_result is "cache" and (typeof provider isnt "string" or not provider)
 					defer?.reject new Error("You must set a provider when using the cache")
 					if callback
@@ -241,3 +243,4 @@ module.exports = (oio) ->
 			oauthio.request.http opts  if oauthio.request.http
 			return
 	}
+	return oauth
