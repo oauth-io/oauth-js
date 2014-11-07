@@ -1,6 +1,6 @@
 {
   "name": "oauth-js",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "OAuth that just works",
   "main": "dist/oauth.min.js",
   "directories": {
@@ -25,5 +25,8 @@
     "grunt-jasmine-node": "~0.2.1",
     "jasmine-node": "~2.0.x",
     "istanbul": "~0.2.7"
+  },
+  "dependencies": {
+    "q": "^1.0.1"
   }
 }
