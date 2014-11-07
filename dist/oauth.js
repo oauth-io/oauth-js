@@ -120,6 +120,7 @@ module.exports = function(window, document, $, navigator) {
               config.options[i] = options[i];
             }
           }
+          oauthio.request.retrieveMethods();
         },
         setOAuthdURL: function(url) {
           config.oauthd_url = url;
@@ -414,7 +415,8 @@ module.exports = function(window, document, $, navigator) {
           if (oauthio.request.http) {
             oauthio.request.http(opts);
           }
-        }
+        },
+        ready: function(callback) {}
       };
     }
   };
@@ -427,7 +429,42 @@ var Url,
 Url = require('../tools/url')();
 
 module.exports = function($, config, client_states, cache, providers_api) {
+  var extended_methods;
+  extended_methods = void 0;
   return {
+    retrieveMethods: function() {
+      return $.ajax(config.oauthd_url + '/api/extended-endpoints').then(function(data) {
+        return extended_methods = data.data;
+      }).fail(function(e) {
+        return console.log('Error', e);
+      });
+    },
+    generateMethods: function(request_object, tokens, provider) {
+      var k, kk, name_array, pt, v, vv, _results;
+      _results = [];
+      for (k in extended_methods) {
+        v = extended_methods[k];
+        name_array = v.name.split('.');
+        pt = request_object;
+        _results.push((function() {
+          var _results1;
+          _results1 = [];
+          for (kk in name_array) {
+            vv = name_array[kk];
+            if (kk < name_array.length - 1) {
+              if (pt[vv] == null) {
+                pt[vv] = {};
+              }
+              _results1.push(pt = pt[vv]);
+            } else {
+              _results1.push(pt[vv] = this.mkHttpAll(provider, tokens, v, arguments));
+            }
+          }
+          return _results1;
+        }).apply(this, arguments));
+      }
+      return _results;
+    },
     http: function(opts) {
       var defer, desc_opts, doRequest, i, options;
       doRequest = function() {
@@ -561,6 +598,45 @@ module.exports = function($, config, client_states, cache, providers_api) {
         return doRequest();
       }
     },
+    http_all: function(options, endpoint_descriptor, parameters) {
+      var doRequest;
+      doRequest = function() {
+        var defer, k, promise, request;
+        defer = $.Deferred();
+        request = options.oauthio.request || {};
+        options.headers = options.headers || {};
+        options.headers.oauthio = "k=" + config.key;
+        if (options.oauthio.tokens.oauth_token && options.oauthio.tokens.oauth_token_secret) {
+          options.headers.oauthio += "&oauthv=1";
+        }
+        for (k in options.oauthio.tokens) {
+          options.headers.oauthio += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(options.oauthio.tokens[k]);
+        }
+        delete options.oauthio;
+        promise = $.ajax(options);
+        $.when(promise).done(function(data) {
+          var error;
+          if (typeof data.data === 'string') {
+            try {
+              data.data = JSON.parse(data.data);
+            } catch (_error) {
+              error = _error;
+              data.data = data.data;
+            } finally {
+              defer.resolve(data.data);
+            }
+          }
+        }).fail(function(data) {
+          if (data.responseJSON) {
+            defer.reject(data.responseJSON.data);
+          } else {
+            defer.reject(new Error("An error occured while trying to access the resource"));
+          }
+        });
+        return defer.promise();
+      };
+      return doRequest();
+    },
     mkHttp: function(provider, tokens, request, method) {
       var base;
       base = this;
@@ -603,6 +679,30 @@ module.exports = function($, config, client_states, cache, providers_api) {
         options.data = options.data || {};
         options.data.filter = (filter ? filter.join(",") : undefined);
         return base.http_me(options);
+      };
+    },
+    mkHttpAll: function(provider, tokens, endpoint_descriptor) {
+      var base;
+      base = this;
+      return function() {
+        var k, options, th_param, v;
+        options = {};
+        options.type = endpoint_descriptor.method;
+        options.url = config.oauthd_url + endpoint_descriptor.endpoint.replace(':provider', provider);
+        options.oauthio = {
+          provider: provider,
+          tokens: tokens
+        };
+        options.data = {};
+        for (k in arguments) {
+          v = arguments[k];
+          th_param = endpoint_descriptor.params[k];
+          if (th_param != null) {
+            options.data[th_param.name] = v;
+          }
+        }
+        options.data = options.data || {};
+        return base.http_all(options, endpoint_descriptor, arguments);
       };
     },
     sendCallback: function(opts, defer) {
@@ -704,6 +804,7 @@ module.exports = function($, config, client_states, cache, providers_api) {
       res.patch = make_res("PATCH");
       res.del = make_res("DELETE");
       res.me = base.mkHttpMe(data.provider, tokens, request, "GET");
+      this.generateMethods(res, tokens, data.provider);
       defer.resolve(res);
       if (opts.callback && typeof opts.callback === "function") {
         return opts.callback(null, res);

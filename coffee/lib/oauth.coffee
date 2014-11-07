@@ -83,6 +83,9 @@ module.exports = (window, document, $, navigator) ->
 
 	oauthio = request: oauthio_requests($, config, client_states, cache, providers_api)
 
+
+	
+
 	return (exports) ->
 		unless exports.OAuth?
 			exports.OAuth =
@@ -91,11 +94,13 @@ module.exports = (window, document, $, navigator) ->
 					if options
 						for i of options
 							config.options[i] = options[i]
+					oauthio.request.retrieveMethods()
 					return
 
 				setOAuthdURL: (url) ->
 					config.oauthd_url = url
 					config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0]
+					
 					return
 
 				getVersion: ->
@@ -305,5 +310,8 @@ module.exports = (window, document, $, navigator) ->
 
 				http: (opts) ->
 					oauthio.request.http opts  if oauthio.request.http
+					return
+
+				ready: (callback) ->
 					return
 		return
