@@ -5,6 +5,7 @@ cache = require("../tools/cache")
 Url = require("../tools/url")
 sha1 = require("../tools/sha1")
 oauthio_requests = require("./oauthio_requests")
+Q = require 'q'
 module.exports = (window, document, $, navigator) ->
 
 	# datastore = datastore(config, document)
@@ -83,19 +84,23 @@ module.exports = (window, document, $, navigator) ->
 
 	oauthio = request: oauthio_requests($, config, client_states, cache, providers_api)
 
+
+	
+
 	return (exports) ->
 		unless exports.OAuth?
 			exports.OAuth =
+				debug: false
 				initialize: (public_key, options) ->
 					config.key = public_key
 					if options
 						for i of options
 							config.options[i] = options[i]
-					return
 
 				setOAuthdURL: (url) ->
 					config.oauthd_url = url
 					config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0]
+					
 					return
 
 				getVersion: ->
@@ -135,6 +140,7 @@ module.exports = (window, document, $, navigator) ->
 					frm = undefined
 					wndTimeout = undefined
 					defer = $.Deferred()
+					# defer = Q.defer()
 					opts = opts or {}
 					unless config.key
 						defer?.reject new Error("OAuth object must be initialized")
@@ -263,6 +269,7 @@ module.exports = (window, document, $, navigator) ->
 
 				callback: (provider, opts, callback) ->
 					defer = $.Deferred()
+					# defer = Q.defer()
 					if arguments.length is 1 and typeof provider == "function"
 						callback = provider
 						provider = `undefined`
@@ -305,5 +312,8 @@ module.exports = (window, document, $, navigator) ->
 
 				http: (opts) ->
 					oauthio.request.http opts  if oauthio.request.http
+					return
+
+				ready: (callback) ->
 					return
 		return

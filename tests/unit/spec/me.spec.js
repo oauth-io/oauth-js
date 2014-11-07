@@ -53,6 +53,9 @@ describe("OAuth result.me method", function() {
                 expect(options.headers).toBeDefined();
                 expect(options.headers.oauthio).toBe("k=akey&oauthv=1&oauth_token=mytoken&oauth_token_secret=tokensecret");
                 return {
+                    data: {
+                        hello: 'world'
+                    },
                     __success: true
                 };
             });
