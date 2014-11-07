@@ -1,6 +1,20 @@
 module.exports = function() {
     jquery = {
-        ajaxOptionsHandler: undefined,
+        ajaxOptionsHandler: function (options) {
+            //Default handler
+            if (typeof options == 'string')
+                options = { url: options };
+            if (options.url && options.url.match(/\/api\/extended-endpoints/)) {
+                return {
+                    __success: true
+                }
+            } else {
+                return {
+                    __success: false
+                }
+            }
+
+        },
         setAjaxOptionsHandler: function(callback) {
             jquery.ajaxOptionsHandler = callback;
         },
@@ -79,7 +93,7 @@ module.exports = function() {
                     };
                 };
             var handled = handling_method(options);
-            if (handled.__status) {
+            if (handled.__success) {
                 ret.resolve(handled);
             } else {
                 ret.reject(handled);

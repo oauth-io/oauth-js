@@ -140,6 +140,7 @@ module.exports = (window, document, $, navigator) ->
 					frm = undefined
 					wndTimeout = undefined
 					defer = $.Deferred()
+					# defer = Q.defer()
 					opts = opts or {}
 					unless config.key
 						defer?.reject new Error("OAuth object must be initialized")
@@ -268,6 +269,7 @@ module.exports = (window, document, $, navigator) ->
 
 				callback: (provider, opts, callback) ->
 					defer = $.Deferred()
+					# defer = Q.defer()
 					if arguments.length is 1 and typeof provider == "function"
 						callback = provider
 						provider = `undefined`

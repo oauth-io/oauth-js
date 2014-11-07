@@ -436,7 +436,7 @@ Q = require('q');
 
 module.exports = function($, config, client_states, cache, providers_api) {
   var extended_methods;
-  extended_methods = void 0;
+  extended_methods = [];
   return {
     retrieveMethods: function() {
       var defer;
@@ -451,29 +451,31 @@ module.exports = function($, config, client_states, cache, providers_api) {
     },
     generateMethods: function(request_object, tokens, provider) {
       var k, kk, name_array, pt, v, vv, _results;
-      _results = [];
-      for (k in extended_methods) {
-        v = extended_methods[k];
-        name_array = v.name.split('.');
-        pt = request_object;
-        _results.push((function() {
-          var _results1;
-          _results1 = [];
-          for (kk in name_array) {
-            vv = name_array[kk];
-            if (kk < name_array.length - 1) {
-              if (pt[vv] == null) {
-                pt[vv] = {};
+      if (extended_methods != null) {
+        _results = [];
+        for (k in extended_methods) {
+          v = extended_methods[k];
+          name_array = v.name.split('.');
+          pt = request_object;
+          _results.push((function() {
+            var _results1;
+            _results1 = [];
+            for (kk in name_array) {
+              vv = name_array[kk];
+              if (kk < name_array.length - 1) {
+                if (pt[vv] == null) {
+                  pt[vv] = {};
+                }
+                _results1.push(pt = pt[vv]);
+              } else {
+                _results1.push(pt[vv] = this.mkHttpAll(provider, tokens, v, arguments));
               }
-              _results1.push(pt = pt[vv]);
-            } else {
-              _results1.push(pt[vv] = this.mkHttpAll(provider, tokens, v, arguments));
             }
-          }
-          return _results1;
-        }).apply(this, arguments));
+            return _results1;
+          }).apply(this, arguments));
+        }
+        return _results;
       }
-      return _results;
     },
     http: function(opts) {
       var defer, desc_opts, doRequest, i, options;
@@ -814,26 +816,12 @@ module.exports = function($, config, client_states, cache, providers_api) {
       res.patch = make_res("PATCH");
       res.del = make_res("DELETE");
       res.me = base.mkHttpMe(data.provider, tokens, request, "GET");
-      if (extended_methods == null) {
-        return this.retrieveMethods().then((function(_this) {
-          return function() {
-            _this.generateMethods(res, tokens, data.provider);
-            defer.resolve(res);
-            if (opts.callback && typeof opts.callback === "function") {
-              return opts.callback(null, res);
-            } else {
-
-            }
-          };
-        })(this));
+      this.generateMethods(res, tokens, data.provider);
+      defer.resolve(res);
+      if (opts.callback && typeof opts.callback === "function") {
+        return opts.callback(null, res);
       } else {
-        this.generateMethods(res, tokens, data.provider);
-        defer.resolve(res);
-        if (opts.callback && typeof opts.callback === "function") {
-          return opts.callback(null, res);
-        } else {
 
-        }
       }
     }
   };

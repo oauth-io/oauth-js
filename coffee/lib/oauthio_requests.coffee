@@ -2,7 +2,7 @@ Url = require('../tools/url')()
 Q = require('q')
 
 module.exports = ($, config, client_states, cache, providers_api) ->
-	extended_methods = undefined
+	extended_methods = []
 
 
 	retrieveMethods: () ->
@@ -18,17 +18,18 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		defer.promise
 
 	generateMethods: (request_object, tokens, provider) ->
-		for k, v of extended_methods
-			# v is a method to add
-			name_array = v.name.split '.'
-			pt = request_object
-			for kk,vv of name_array
-				if kk < name_array.length - 1
-					if not pt[vv]?
-						pt[vv] = {}
-					pt = pt[vv]
-				else
-					pt[vv] = @mkHttpAll provider, tokens, v, arguments
+		if extended_methods?
+			for k, v of extended_methods
+				# v is a method to add
+				name_array = v.name.split '.'
+				pt = request_object
+				for kk,vv of name_array
+					if kk < name_array.length - 1
+						if not pt[vv]?
+							pt[vv] = {}
+						pt = pt[vv]
+					else
+						pt[vv] = @mkHttpAll provider, tokens, v, arguments
 
 	http: (opts) ->
 		doRequest = ->
@@ -294,21 +295,10 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		res.del = make_res("DELETE")
 		res.me = base.mkHttpMe(data.provider, tokens, request, "GET")
 
-		if not extended_methods?
-			@retrieveMethods()
-				.then () =>
-					@generateMethods res, tokens, data.provider
+		@generateMethods res, tokens, data.provider
 
-					defer.resolve res
-					if opts.callback and typeof opts.callback == "function"
-						opts.callback null, res
-					else
-						return
+		defer.resolve res
+		if opts.callback and typeof opts.callback == "function"
+			opts.callback null, res
 		else
-			@generateMethods res, tokens, data.provider
-
-			defer.resolve res
-			if opts.callback and typeof opts.callback == "function"
-				opts.callback null, res
-			else
-				return
+			return
