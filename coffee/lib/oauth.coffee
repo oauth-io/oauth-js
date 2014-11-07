@@ -5,6 +5,7 @@ cache = require("../tools/cache")
 Url = require("../tools/url")
 sha1 = require("../tools/sha1")
 oauthio_requests = require("./oauthio_requests")
+Q = require 'q'
 module.exports = (window, document, $, navigator) ->
 
 	# datastore = datastore(config, document)
@@ -89,13 +90,12 @@ module.exports = (window, document, $, navigator) ->
 	return (exports) ->
 		unless exports.OAuth?
 			exports.OAuth =
+				debug: false
 				initialize: (public_key, options) ->
 					config.key = public_key
 					if options
 						for i of options
 							config.options[i] = options[i]
-					oauthio.request.retrieveMethods()
-					return
 
 				setOAuthdURL: (url) ->
 					config.oauthd_url = url

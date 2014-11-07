@@ -1,15 +1,21 @@
 Url = require('../tools/url')()
+Q = require('q')
 
 module.exports = ($, config, client_states, cache, providers_api) ->
 	extended_methods = undefined
 
 
 	retrieveMethods: () ->
+		defer = Q.defer()
 		$.ajax(config.oauthd_url + '/api/extended-endpoints')
 			.then (data) ->
 				extended_methods = data.data
+				defer.resolve()
 			.fail (e) ->
-				console.log 'Error', e
+				defer.reject(e)
+
+
+		defer.promise
 
 	generateMethods: (request_object, tokens, provider) ->
 		for k, v of extended_methods
@@ -288,10 +294,21 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		res.del = make_res("DELETE")
 		res.me = base.mkHttpMe(data.provider, tokens, request, "GET")
 
-		@generateMethods res, tokens, data.provider
+		if not extended_methods?
+			@retrieveMethods()
+				.then () =>
+					@generateMethods res, tokens, data.provider
 
-		defer.resolve res
-		if opts.callback and typeof opts.callback == "function"
-			opts.callback null, res
+					defer.resolve res
+					if opts.callback and typeof opts.callback == "function"
+						opts.callback null, res
+					else
+						return
 		else
-			return
+			@generateMethods res, tokens, data.provider
+
+			defer.resolve res
+			if opts.callback and typeof opts.callback == "function"
+				opts.callback null, res
+			else
+				return
