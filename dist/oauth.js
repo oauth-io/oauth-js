@@ -773,6 +773,7 @@ module.exports = function(oio, client_states, providers_api) {
         data.data.provider = data.provider;
       }
       res = data.data;
+      res.provider = data.provider.toLowerCase();
       if (cache.cacheEnabled(opts.cache) && res) {
         cache.storeCache(data.provider, res);
       }
@@ -805,6 +806,32 @@ module.exports = function(oio, client_states, providers_api) {
       make_res = function(method) {
         return base.mkHttp(data.provider, tokens, request, method);
       };
+      res.toJson = function() {
+        var a;
+        a = {};
+        if (res.access_token != null) {
+          a.access_token = res.access_token;
+        }
+        if (res.oauth_token != null) {
+          a.oauth_token = res.oauth_token;
+        }
+        if (res.oauth_token_secret != null) {
+          a.oauth_token_secret = res.oauth_token_secret;
+        }
+        if (res.expires_in != null) {
+          a.expires_in = res.expires_in;
+        }
+        if (res.token_type != null) {
+          a.token_type = res.token_type;
+        }
+        if (res.id_token != null) {
+          a.id_token = res.id_token;
+        }
+        if (res.provider != null) {
+          a.provider = res.provider;
+        }
+        return a;
+      };
       res.get = make_res("GET");
       res.post = make_res("POST");
       res.put = make_res("PUT");
@@ -830,11 +857,15 @@ module.exports = function(oio) {
   cookieStore = oio.getCookies();
   UserObject = (function() {
     function UserObject(data) {
-      this.data = data;
-      console.log(this.data);
+      console.log("constructor User Object", data);
+      this.token = data.token;
+      this.data = data.user;
+      this.providers = data.providers;
     }
 
-    UserObject.prototype.save = function() {};
+    UserObject.prototype.save = function() {
+      return this.saveLocal();
+    };
 
     UserObject.prototype.select = function(provider) {
       var OAuthResult;
@@ -858,16 +889,79 @@ module.exports = function(oio) {
     		})
      */
 
+    UserObject.prototype.saveLocal = function() {
+      var copy;
+      copy = {
+        token: this.token,
+        user: this.data,
+        providers: this.providers
+      };
+      cookieStore.eraseCookie('oio_auth');
+      return cookieStore.createCookie('oio_auth', JSON.stringify(copy), 21600);
+    };
+
+    UserObject.prototype.hasProvider = function(provider) {
+      return this.providers.indexOf(provider) !== -1;
+    };
+
     UserObject.prototype.getProviders = function() {
-      return oio.API.get('/api/usermanagement/providers?k=' + config.key + '&token=' + this.token);
+      var defer;
+      defer = $.Deferred();
+      oio.API.get('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token).done((function(_this) {
+        return function(providers) {
+          _this.providers = providers.data;
+          _this.saveLocal();
+          return defer.resolve(_this.providers);
+        };
+      })(this)).fail(function(err) {
+        return defer.fail(err);
+      });
+      return defer.promise();
     };
 
     UserObject.prototype.addProvider = function(oauthRes) {
-      return oio.API.post('/api/usermanagement/providers?k=' + config.key + '&token=' + this.token);
+      var defer;
+      defer = $.Deferred();
+      if (typeof oauthRes.toJson === 'function') {
+        oauthRes = oauthRes.toJson();
+      }
+      oauthRes.email = this.data.email;
+      console.log(oauthRes);
+      this.providers.push(oauthRes.provider);
+      oio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
+        return function(res) {
+          _this.saveLocal();
+          return defer.resolve(res);
+        };
+      })(this)).fail((function(_this) {
+        return function(err) {
+          _this.provider.splice(_this.providers.indexOf(oauthRes.provider), 1);
+          return defer.fail(err);
+        };
+      })(this));
+      return defer.promise();
+    };
+
+    UserObject.prototype.removeProvider = function(provider) {
+      var defer;
+      defer = $.Deferred();
+      this.providers.splice(this.providers.indexOf(provider), 1);
+      oio.API.del('/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + this.token).done((function(_this) {
+        return function(res) {
+          _this.saveLocal();
+          return defer.resolve(res);
+        };
+      })(this)).fail((function(_this) {
+        return function(err) {
+          _this.providers.push(provider);
+          return defer.fail(err);
+        };
+      })(this));
+      return defer.promise();
     };
 
     UserObject.prototype.changePassword = function(oldPassword, newPassword) {
-      return oio.API.post('/api/usermanagement/user/passwordk=' + config.key + '&token=' + this.token, {
+      return oio.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
         password: newPassword
       });
     };
@@ -878,13 +972,13 @@ module.exports = function(oio) {
 
     UserObject.prototype.logout = function() {
       var defer;
-      defer = $.Defered();
-      oio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done((function() {
+      defer = $.Deferred();
+      oio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
         cookieStore.eraseCookie('oio_auth');
         return defer.resolve();
       }).fail(function(err) {
         return defer.fail(err);
-      }));
+      });
       return defer.promise();
     };
 
@@ -892,60 +986,51 @@ module.exports = function(oio) {
 
   })();
   return {
-    signup: function(email, password, firstname, lastname, data) {
+    initialize: function(public_key, options) {
+      return oio.initialize(public_key, options);
+    },
+    signup: function(data) {
       var defer;
-      defer = $.Defered();
-      if (typeof email !== 'string') {
-        return oio.API.post('/api/usermanagement/signup?k=' + config.key, {
-          access_token: email.access_token,
-          provider: email.provider,
-          email: password ? password : null
-        }).done((function(res) {
-          cookieStore.createCookie('oio_auth', res.data.token, res.data.expire_in);
-          return defer.resolve(new UserObject(res.data));
-        }).fail(function(err) {
-          return defer.fail(err);
-        }));
-      } else {
-        return oio.API.post('/api/usermanagement/signup?k=' + config.key, {
-          email: email,
-          password: password,
-          firstname: firstname,
-          lastname: lastname,
-          data: data
-        }).done((function(res) {
-          cookieStore.createCookie('oio_auth', res.data.token, res.data.expire_in);
-          return defer.resolve(new UserObject(res.data));
-        }).fail(function(err) {
-          return defer.fail(err);
-        }));
+      defer = $.Deferred();
+      if (typeof data.toJson === 'function') {
+        data = data.toJson();
       }
+      console.log(data);
+      oio.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
+        cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
+        return defer.resolve(new UserObject(res.data));
+      }).fail(function(err) {
+        return defer.fail(err);
+      });
+      return defer.promise();
     },
     signin: function(email, password) {
-      var defer;
-      defer = $.Defered();
+      var defer, result;
+      defer = $.Deferred();
       if (typeof email !== "string" && !password) {
-        oio.API.post('/api/usermanagement/signin?k=' + config.key, {
-          access_token: email.access_token,
-          provider: email.provider
-        }).done((function(res) {
-          cookieStore.createCookie('oio_auth', res.data.token, res.data.expire_in);
+        result = email;
+        if (typeof result.toJson === 'function') {
+          result = result.toJson();
+        }
+        oio.API.post('/api/usermanagement/signin?k=' + config.key, result).done(function(res) {
+          console.log('signed in', res);
+          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.fail(err);
-        }));
+        });
       } else {
         oio.API.post('/api/usermanagement/signin?k=' + config.key, {
           email: email,
           password: password
-        }).done((function(res) {
-          cookieStore.createCookie('oio_auth', res.data.token, res.data.expire_in);
+        }).done(function(res) {
+          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.fail(err);
-        }));
+        });
       }
-      return defere.promise();
+      return defer.promise();
     },
     resetPassword: function(email, callback) {
       return oio.API.post('/api/usermanagement/password/reset?k=' + config.key, {
@@ -953,14 +1038,8 @@ module.exports = function(oio) {
       });
     },
     getIdentity: function() {
-      var defer;
-      defer = $.Defered();
-      oio.API.get('/api/usermanagement/user?k=' + config.key).done(function(res) {
-        return defer.resolve(new UserObject(res.data));
-      }).fail(function(err) {
-        return defer.reject(err);
-      });
-      return defer.promise();
+      console.log('haaaaaaaa', cookieStore.readCookie('oio_auth'));
+      return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')));
     },
     isLogged: function() {
       var a;
@@ -975,13 +1054,30 @@ module.exports = function(oio) {
 
 },{}],8:[function(require,module,exports){
 (function() {
-  var jquery;
+  var Materia, jquery;
   jquery = require('./tools/jquery-lite.js');
-  window.oio = require('./lib/core')(window, document, jquery, navigator);
-  window.oio.extend('OAuth', require('./lib/oauth'));
-  window.oio.extend('API', require('./lib/api'));
-  window.oio.extend('User', require('./lib/user'));
-  return window.OAuth = window.oio.OAuth;
+  Materia = require('./lib/core')(window, document, jquery, navigator);
+  Materia.extend('OAuth', require('./lib/oauth'));
+  Materia.extend('API', require('./lib/api'));
+  Materia.extend('User', require('./lib/user'));
+  if (typeof angular !== "undefined" && angular !== null) {
+    angular.module('oauthio', []).factory('Materia', [
+      function() {
+        return Materia;
+      }
+    ]).factory('OAuth', [
+      function() {
+        return Materia.OAuth;
+      }
+    ]).factory('User', [
+      function() {
+        return Materia.User;
+      }
+    ]);
+  }
+  window.Materia = Materia;
+  window.User = window.Materia.User;
+  return window.OAuth = window.Materia.OAuth;
 })();
 
 },{"./lib/api":2,"./lib/core":3,"./lib/oauth":4,"./lib/user":7,"./tools/jquery-lite.js":11}],9:[function(require,module,exports){

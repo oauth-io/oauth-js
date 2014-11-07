@@ -190,6 +190,7 @@ module.exports = (oio, client_states, providers_api) ->
 				return
 		data.data.provider = data.provider  unless opts.provider
 		res = data.data
+		res.provider = data.provider.toLowerCase()
 		cache.storeCache data.provider, res  if cache.cacheEnabled(opts.cache) and res
 		request = res.request
 		delete res.request
@@ -212,6 +213,17 @@ module.exports = (oio, client_states, providers_api) ->
 				tokens[request.required[i]] = res[request.required[i]]
 		make_res = (method) ->
 			base.mkHttp data.provider, tokens, request, method
+
+		res.toJson = ->
+			a = {}
+			a.access_token = res.access_token if res.access_token?
+			a.oauth_token = res.oauth_token if res.oauth_token?
+			a.oauth_token_secret = res.oauth_token_secret if res.oauth_token_secret?
+			a.expires_in = res.expires_in if res.expires_in?
+			a.token_type = res.token_type if res.token_type?
+			a.id_token = res.id_token if res.id_token?
+			a.provider = res.provider if res.provider?
+			return a
 
 		res.get = make_res("GET")
 		res.post = make_res("POST")
