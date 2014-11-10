@@ -7,7 +7,6 @@ module.exports = (oio) ->
 
 	class UserObject
 		constructor: (data) ->
-			console.log "constructor User Object", data
 			@token = data.token
 			@data = data.user
 			@providers = data.providers
@@ -30,27 +29,12 @@ module.exports = (oio) ->
 				dataToSave[d.key] = @data[d.key] if @data[d.key] != d.value
 				delete @data[d.key] if @data[d.key] == null
 			@saveLocal()
-			console.log dataToSave
 			return oio.API.put '/api/usermanagement/user?k=' + config.key + '&token=' + @token, dataToSave
 
+		## todo select(provider)
 		select: (provider) ->
 			OAuthResult = null
 			return OAuthResult
-
-		###
-		oio.OAuth.popup('facebook').then(function(res) {
-			res.provider = 'facebook'
-			return oio.User.signin(res)
-		}).then(function(user) {
-			return user.select('google')
-		}).then(function(google) {
-			return google.me()
-		}).done(function(me) {
-			...
-		}).fail(function(err) {
-			todo_with_err()
-		})
-		###
 
 		saveLocal: () ->
 			copy = token: @token, user: @data, providers: @providers
@@ -75,7 +59,6 @@ module.exports = (oio) ->
 			defer = $.Deferred()
 			oauthRes = oauthRes.toJson() if typeof oauthRes.toJson == 'function'
 			oauthRes.email = @data.email
-			console.log oauthRes
 			@providers.push oauthRes.provider
 			oio.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
 				.done (res) =>
@@ -125,7 +108,7 @@ module.exports = (oio) ->
 			console.log data
 			oio.API.post '/api/usermanagement/signup?k=' + config.key, data
 				.done (res) ->
-					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600
+					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->
 					defer.fail err
@@ -136,12 +119,12 @@ module.exports = (oio) ->
 			defer = $.Deferred()
 			if typeof email != "string" and not password
 				# signin(OAuthRes)
-				result = email
-				result = result.toJson() if typeof result.toJson == 'function'
-				oio.API.post '/api/usermanagement/signin?k=' + config.key, result
+				signinData = email
+				signinData = signinData.toJson() if typeof signinData.toJson == 'function'
+				oio.API.post '/api/usermanagement/signin?k=' + config.key, signinData
 					.done (res) ->
 						console.log 'signed in', res
-						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600
+						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 						defer.resolve new UserObject(res.data)
 					.fail (err) ->
 						defer.fail err
@@ -151,7 +134,7 @@ module.exports = (oio) ->
 					email: email
 					password: password
 				).done((res) ->
-					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600
+					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				).fail (err) ->
 					defer.fail err
@@ -160,19 +143,17 @@ module.exports = (oio) ->
 		resetPassword: (email, callback) ->
 			oio.API.post '/api/usermanagement/password/reset?k=' + config.key, email: email
 
-		getIdentity: () ->
-			#a = cookieStore.readCookie 'oio_user'
-			#return new UserObject(JSON.parse(a)) if a
-			console.log('haaaaaaaa', cookieStore.readCookie('oio_auth'))
-			return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')))
+		refreshIdentity: () ->
+			defer = $.Deferred()
+			oio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth'))
+				.done (res) ->
+					defer.resolve new UserObject(res.data)
+				.fail (err) ->
+					defer.reject err
+			return defer.promise()
 
-			#defer = $.Deferred()
-			#oio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth'))
-			#	.done (res) ->
-			#		defer.resolve new UserObject(res.data)
-			#	.fail (err) ->
-			#		defer.reject err
-			#return defer.promise()
+		getIdentity: () ->
+			return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')))
 
 		isLogged: () ->
 			a = cookieStore.readCookie 'oio_auth'
