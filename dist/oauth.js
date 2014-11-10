@@ -861,10 +861,40 @@ module.exports = function(oio) {
       this.token = data.token;
       this.data = data.user;
       this.providers = data.providers;
+      this.lastSave = this.getEditableData();
     }
 
+    UserObject.prototype.getEditableData = function() {
+      var data, key;
+      data = [];
+      for (key in this.data) {
+        if (['id', 'email'].indexOf(key) === -1) {
+          data.push({
+            key: key,
+            value: this.data[key]
+          });
+        }
+      }
+      return data;
+    };
+
     UserObject.prototype.save = function() {
-      return this.saveLocal();
+      var d, dataToSave, _i, _len, _ref;
+      dataToSave = {};
+      _ref = this.lastSave;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        d = _ref[_i];
+        console.log(d);
+        if (this.data[d.key] !== d.value) {
+          dataToSave[d.key] = this.data[d.key];
+        }
+        if (this.data[d.key] === null) {
+          delete this.data[d.key];
+        }
+      }
+      this.saveLocal();
+      console.log(dataToSave);
+      return oio.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
     };
 
     UserObject.prototype.select = function(provider) {

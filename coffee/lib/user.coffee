@@ -11,10 +11,27 @@ module.exports = (oio) ->
 			@token = data.token
 			@data = data.user
 			@providers = data.providers
+			@lastSave = @getEditableData()
+
+		getEditableData: () ->
+			data = []
+			for key of @data
+				if ['id', 'email'].indexOf(key) == -1
+					data.push
+						key: key
+						value: @data[key]
+			return data
 
 		save: () ->
 			#call to save on stormpath
+			dataToSave = {}
+			for d in @lastSave
+				console.log d
+				dataToSave[d.key] = @data[d.key] if @data[d.key] != d.value
+				delete @data[d.key] if @data[d.key] == null
 			@saveLocal()
+			console.log dataToSave
+			return oio.API.put '/api/usermanagement/user?k=' + config.key + '&token=' + @token, dataToSave
 
 		select: (provider) ->
 			OAuthResult = null
