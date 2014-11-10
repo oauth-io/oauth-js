@@ -81,6 +81,7 @@ module.exports = (oio) ->
 					defer.fail err
 			return defer.promise()
 
+		# todo - not working
 		changePassword: (oldPassword, newPassword) ->
 			return oio.API.post '/api/usermanagement/user/password?k=' + config.key + '&token=' + @token,
 				password: newPassword
@@ -139,6 +140,11 @@ module.exports = (oio) ->
 				).fail (err) ->
 					defer.fail err
 			return defer.promise()
+
+		confirmResetPassword: (newPassword, key) ->
+			return oio.API.post '/api/usermanagement/user/password?k=' + config.key + '&token=' + @token,
+				password: newPassword
+				passwordKey: key
 
 		resetPassword: (email, callback) ->
 			oio.API.post '/api/usermanagement/password/reset?k=' + config.key, email: email
