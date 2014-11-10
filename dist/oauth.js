@@ -857,7 +857,6 @@ module.exports = function(oio) {
   cookieStore = oio.getCookies();
   UserObject = (function() {
     function UserObject(data) {
-      console.log("constructor User Object", data);
       this.token = data.token;
       this.data = data.user;
       this.providers = data.providers;
@@ -884,7 +883,6 @@ module.exports = function(oio) {
       _ref = this.lastSave;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         d = _ref[_i];
-        console.log(d);
         if (this.data[d.key] !== d.value) {
           dataToSave[d.key] = this.data[d.key];
         }
@@ -893,7 +891,6 @@ module.exports = function(oio) {
         }
       }
       this.saveLocal();
-      console.log(dataToSave);
       return oio.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
     };
 
@@ -902,22 +899,6 @@ module.exports = function(oio) {
       OAuthResult = null;
       return OAuthResult;
     };
-
-
-    /*
-    		oio.OAuth.popup('facebook').then(function(res) {
-    			res.provider = 'facebook'
-    			return oio.User.signin(res)
-    		}).then(function(user) {
-    			return user.select('google')
-    		}).then(function(google) {
-    			return google.me()
-    		}).done(function(me) {
-    			...
-    		}).fail(function(err) {
-    			todo_with_err()
-    		})
-     */
 
     UserObject.prototype.saveLocal = function() {
       var copy;
@@ -956,7 +937,6 @@ module.exports = function(oio) {
         oauthRes = oauthRes.toJson();
       }
       oauthRes.email = this.data.email;
-      console.log(oauthRes);
       this.providers.push(oauthRes.provider);
       oio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
         return function(res) {
@@ -1025,9 +1005,8 @@ module.exports = function(oio) {
       if (typeof data.toJson === 'function') {
         data = data.toJson();
       }
-      console.log(data);
       oio.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
-        cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
+        cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.fail(err);
@@ -1035,16 +1014,15 @@ module.exports = function(oio) {
       return defer.promise();
     },
     signin: function(email, password) {
-      var defer, result;
+      var defer, signinData;
       defer = $.Deferred();
       if (typeof email !== "string" && !password) {
-        result = email;
-        if (typeof result.toJson === 'function') {
-          result = result.toJson();
+        signinData = email;
+        if (typeof signinData.toJson === 'function') {
+          signinData = signinData.toJson();
         }
-        oio.API.post('/api/usermanagement/signin?k=' + config.key, result).done(function(res) {
-          console.log('signed in', res);
-          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
+        oio.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
+          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.fail(err);
@@ -1054,7 +1032,7 @@ module.exports = function(oio) {
           email: email,
           password: password
         }).done(function(res) {
-          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expire_in || 21600);
+          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.fail(err);
@@ -1062,13 +1040,28 @@ module.exports = function(oio) {
       }
       return defer.promise();
     },
+    confirmResetPassword: function(newPassword, key) {
+      return oio.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
+        password: newPassword,
+        passwordKey: key
+      });
+    },
     resetPassword: function(email, callback) {
       return oio.API.post('/api/usermanagement/password/reset?k=' + config.key, {
         email: email
       });
     },
+    refreshIdentity: function() {
+      var defer;
+      defer = $.Deferred();
+      oio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth')).done(function(res) {
+        return defer.resolve(new UserObject(res.data));
+      }).fail(function(err) {
+        return defer.reject(err);
+      });
+      return defer.promise();
+    },
     getIdentity: function() {
-      console.log('haaaaaaaa', cookieStore.readCookie('oio_auth'));
       return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')));
     },
     isLogged: function() {

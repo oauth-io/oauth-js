@@ -25,7 +25,6 @@ module.exports = (oio) ->
 			#call to save on stormpath
 			dataToSave = {}
 			for d in @lastSave
-				console.log d
 				dataToSave[d.key] = @data[d.key] if @data[d.key] != d.value
 				delete @data[d.key] if @data[d.key] == null
 			@saveLocal()
@@ -106,7 +105,6 @@ module.exports = (oio) ->
 		signup: (data) ->
 			defer = $.Deferred()
 			data = data.toJson() if typeof data.toJson == 'function'
-			console.log data
 			oio.API.post '/api/usermanagement/signup?k=' + config.key, data
 				.done (res) ->
 					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
@@ -124,7 +122,6 @@ module.exports = (oio) ->
 				signinData = signinData.toJson() if typeof signinData.toJson == 'function'
 				oio.API.post '/api/usermanagement/signin?k=' + config.key, signinData
 					.done (res) ->
-						console.log 'signed in', res
 						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 						defer.resolve new UserObject(res.data)
 					.fail (err) ->
