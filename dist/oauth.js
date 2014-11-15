@@ -925,7 +925,7 @@ module.exports = function(oio) {
           return defer.resolve(_this.providers);
         };
       })(this)).fail(function(err) {
-        return defer.fail(err);
+        return defer.reject(err);
       });
       return defer.promise();
     };
@@ -946,7 +946,7 @@ module.exports = function(oio) {
       })(this)).fail((function(_this) {
         return function(err) {
           _this.provider.splice(_this.providers.indexOf(oauthRes.provider), 1);
-          return defer.fail(err);
+          return defer.reject(err);
         };
       })(this));
       return defer.promise();
@@ -964,7 +964,7 @@ module.exports = function(oio) {
       })(this)).fail((function(_this) {
         return function(err) {
           _this.providers.push(provider);
-          return defer.fail(err);
+          return defer.reject(err);
         };
       })(this));
       return defer.promise();
@@ -987,7 +987,7 @@ module.exports = function(oio) {
         cookieStore.eraseCookie('oio_auth');
         return defer.resolve();
       }).fail(function(err) {
-        return defer.fail(err);
+        return defer.reject(err);
       });
       return defer.promise();
     };
@@ -999,6 +999,9 @@ module.exports = function(oio) {
     initialize: function(public_key, options) {
       return oio.initialize(public_key, options);
     },
+    setOAuthdURL: function(url) {
+      return oio.setOAuthdURL(url);
+    },
     signup: function(data) {
       var defer;
       defer = $.Deferred();
@@ -1009,7 +1012,7 @@ module.exports = function(oio) {
         cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
-        return defer.fail(err);
+        return defer.reject(err);
       });
       return defer.promise();
     },
@@ -1025,7 +1028,7 @@ module.exports = function(oio) {
           cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
-          return defer.fail(err);
+          return defer.reject(err);
         });
       } else {
         oio.API.post('/api/usermanagement/signin?k=' + config.key, {
@@ -1035,7 +1038,7 @@ module.exports = function(oio) {
           cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
-          return defer.fail(err);
+          return defer.reject(err);
         });
       }
       return defer.promise();

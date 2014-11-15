@@ -51,7 +51,7 @@ module.exports = (oio) ->
 					@saveLocal()
 					defer.resolve @providers
 				.fail (err) ->
-					defer.fail err
+					defer.reject err
 			return defer.promise()
 
 		addProvider: (oauthRes) ->
@@ -65,7 +65,7 @@ module.exports = (oio) ->
 					defer.resolve res
 				.fail (err) =>
 					@provider.splice @providers.indexOf(oauthRes.provider), 1
-					defer.fail err
+					defer.reject err
 			return defer.promise()
 
 		removeProvider: (provider) ->
@@ -77,7 +77,7 @@ module.exports = (oio) ->
 					defer.resolve res
 				.fail (err) =>
 					@providers.push provider
-					defer.fail err
+					defer.reject err
 			return defer.promise()
 
 		# todo - not working
@@ -96,12 +96,12 @@ module.exports = (oio) ->
 					cookieStore.eraseCookie 'oio_auth'
 					defer.resolve()
 				.fail (err)->
-					defer.fail err
+					defer.reject err
 
 			return defer.promise()
 	return {
 		initialize: (public_key, options) -> return oio.initialize public_key, options
-
+		setOAuthdURL: (url) -> return oio.setOAuthdURL url
 		signup: (data) ->
 			defer = $.Deferred()
 			data = data.toJson() if typeof data.toJson == 'function'
@@ -110,7 +110,7 @@ module.exports = (oio) ->
 					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->
-					defer.fail err
+					defer.reject err
 
 			return defer.promise()
 
@@ -125,7 +125,7 @@ module.exports = (oio) ->
 						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 						defer.resolve new UserObject(res.data)
 					.fail (err) ->
-						defer.fail err
+						defer.reject err
 			else
 				# signin(email, password)
 				oio.API.post('/api/usermanagement/signin?k=' + config.key,
@@ -135,7 +135,7 @@ module.exports = (oio) ->
 					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				).fail (err) ->
-					defer.fail err
+					defer.reject err
 			return defer.promise()
 
 		confirmResetPassword: (newPassword, key) ->
