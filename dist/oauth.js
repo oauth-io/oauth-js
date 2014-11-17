@@ -9,12 +9,13 @@ module.exports = {
 },{}],2:[function(require,module,exports){
 "use strict";
 module.exports = function(oio) {
-  var $, base;
-  base = oio.getOAuthdURL();
+  var $;
   $ = oio.getJquery();
   return {
     get: (function(_this) {
       return function(url, params) {
+        var base;
+        base = oio.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'get',
@@ -24,6 +25,8 @@ module.exports = function(oio) {
     })(this),
     post: (function(_this) {
       return function(url, params) {
+        var base;
+        base = oio.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'post',
@@ -33,6 +36,8 @@ module.exports = function(oio) {
     })(this),
     put: (function(_this) {
       return function(url, params) {
+        var base;
+        base = oio.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'put',
@@ -42,6 +47,8 @@ module.exports = function(oio) {
     })(this),
     del: (function(_this) {
       return function(url, params) {
+        var base;
+        base = oio.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'delete',
@@ -829,6 +836,9 @@ module.exports = function(oio, client_states, providers_api) {
         }
         if (res.provider != null) {
           a.provider = res.provider;
+        }
+        if (res.email != null) {
+          a.email = res.email;
         }
         return a;
       };

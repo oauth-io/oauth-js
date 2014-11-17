@@ -223,6 +223,7 @@ module.exports = (oio, client_states, providers_api) ->
 			a.token_type = res.token_type if res.token_type?
 			a.id_token = res.id_token if res.id_token?
 			a.provider = res.provider if res.provider?
+			a.email = res.email if res.email?
 			return a
 
 		res.get = make_res("GET")
