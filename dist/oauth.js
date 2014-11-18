@@ -955,7 +955,7 @@ module.exports = function(oio) {
         };
       })(this)).fail((function(_this) {
         return function(err) {
-          _this.provider.splice(_this.providers.indexOf(oauthRes.provider), 1);
+          _this.providers.splice(_this.providers.indexOf(oauthRes.provider), 1);
           return defer.reject(err);
         };
       })(this));

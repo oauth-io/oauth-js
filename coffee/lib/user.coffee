@@ -64,7 +64,7 @@ module.exports = (oio) ->
 					@saveLocal()
 					defer.resolve res
 				.fail (err) =>
-					@provider.splice @providers.indexOf(oauthRes.provider), 1
+					@providers.splice @providers.indexOf(oauthRes.provider), 1
 					defer.reject err
 			return defer.promise()
 
