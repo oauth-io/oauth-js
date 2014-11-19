@@ -5,12 +5,14 @@ module.exports = (oio) ->
 	config = oio.getConfig()
 	cookieStore = oio.getCookies()
 
+	lastSave = null
+
 	class UserObject
 		constructor: (data) ->
 			@token = data.token
 			@data = data.user
 			@providers = data.providers
-			@lastSave = @getEditableData()
+			lastSave = @getEditableData()
 
 		getEditableData: () ->
 			data = []
@@ -23,10 +25,19 @@ module.exports = (oio) ->
 
 		save: () ->
 			#call to save on stormpath
+
 			dataToSave = {}
-			for d in @lastSave
+			for d in lastSave
 				dataToSave[d.key] = @data[d.key] if @data[d.key] != d.value
 				delete @data[d.key] if @data[d.key] == null
+			keyIsInLastSave = (key) ->
+				for o in lastSave
+					return true if o.key == key
+				return false
+
+			for d in @getEditableData()
+				if !keyIsInLastSave d.key
+					dataToSave[d.key] = @data[d.key]
 			@saveLocal()
 			return oio.API.put '/api/usermanagement/user?k=' + config.key + '&token=' + @token, dataToSave
 
@@ -41,7 +52,7 @@ module.exports = (oio) ->
 			cookieStore.createCookie 'oio_auth', JSON.stringify(copy), 21600
 
 		hasProvider: (provider) ->
-			return @providers.indexOf(provider) != -1
+			return @providers?.indexOf(provider) != -1
 
 		getProviders: () ->
 			defer = $.Deferred()
@@ -61,8 +72,9 @@ module.exports = (oio) ->
 			@providers.push oauthRes.provider
 			oio.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
 				.done (res) =>
+					@data = res.data
 					@saveLocal()
-					defer.resolve res
+					defer.resolve()
 				.fail (err) =>
 					@providers.splice @providers.indexOf(oauthRes.provider), 1
 					defer.reject err
@@ -91,9 +103,9 @@ module.exports = (oio) ->
 
 		logout: () ->
 			defer = $.Deferred()
+			cookieStore.eraseCookie 'oio_auth'
 			oio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + @token)
 				.done ->
-					cookieStore.eraseCookie 'oio_auth'
 					defer.resolve()
 				.fail (err)->
 					defer.reject err

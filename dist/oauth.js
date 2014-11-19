@@ -861,16 +861,17 @@ module.exports = function(oio, client_states, providers_api) {
 },{"../tools/url":14}],7:[function(require,module,exports){
 "use strict";
 module.exports = function(oio) {
-  var $, UserObject, config, cookieStore;
+  var $, UserObject, config, cookieStore, lastSave;
   $ = oio.getJquery();
   config = oio.getConfig();
   cookieStore = oio.getCookies();
+  lastSave = null;
   UserObject = (function() {
     function UserObject(data) {
       this.token = data.token;
       this.data = data.user;
       this.providers = data.providers;
-      this.lastSave = this.getEditableData();
+      lastSave = this.getEditableData();
     }
 
     UserObject.prototype.getEditableData = function() {
@@ -888,16 +889,32 @@ module.exports = function(oio) {
     };
 
     UserObject.prototype.save = function() {
-      var d, dataToSave, _i, _len, _ref;
+      var d, dataToSave, keyIsInLastSave, _i, _j, _len, _len1, _ref;
       dataToSave = {};
-      _ref = this.lastSave;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        d = _ref[_i];
+      for (_i = 0, _len = lastSave.length; _i < _len; _i++) {
+        d = lastSave[_i];
         if (this.data[d.key] !== d.value) {
           dataToSave[d.key] = this.data[d.key];
         }
         if (this.data[d.key] === null) {
           delete this.data[d.key];
+        }
+      }
+      keyIsInLastSave = function(key) {
+        var o, _j, _len1;
+        for (_j = 0, _len1 = lastSave.length; _j < _len1; _j++) {
+          o = lastSave[_j];
+          if (o.key === key) {
+            return true;
+          }
+        }
+        return false;
+      };
+      _ref = this.getEditableData();
+      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+        d = _ref[_j];
+        if (!keyIsInLastSave(d.key)) {
+          dataToSave[d.key] = this.data[d.key];
         }
       }
       this.saveLocal();
@@ -922,7 +939,8 @@ module.exports = function(oio) {
     };
 
     UserObject.prototype.hasProvider = function(provider) {
-      return this.providers.indexOf(provider) !== -1;
+      var _ref;
+      return ((_ref = this.providers) != null ? _ref.indexOf(provider) : void 0) !== -1;
     };
 
     UserObject.prototype.getProviders = function() {
@@ -950,8 +968,9 @@ module.exports = function(oio) {
       this.providers.push(oauthRes.provider);
       oio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
         return function(res) {
+          _this.data = res.data;
           _this.saveLocal();
-          return defer.resolve(res);
+          return defer.resolve();
         };
       })(this)).fail((function(_this) {
         return function(err) {
@@ -993,8 +1012,8 @@ module.exports = function(oio) {
     UserObject.prototype.logout = function() {
       var defer;
       defer = $.Deferred();
+      cookieStore.eraseCookie('oio_auth');
       oio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
-        cookieStore.eraseCookie('oio_auth');
         return defer.resolve();
       }).fail(function(err) {
         return defer.reject(err);
