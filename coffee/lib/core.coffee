@@ -13,7 +13,7 @@ module.exports = (window, document, jquery, navigator) ->
 
 	cache.init cookies, config
 
-	oio =
+	Materia =
 		initialize: (public_key, options) ->
 			config.key = public_key
 			if options
@@ -43,4 +43,4 @@ module.exports = (window, document, jquery, navigator) ->
 		getCookies: () -> return cookies
 		getLocationOperations: () -> return location_operations
 
-	return oio
+	return Materia

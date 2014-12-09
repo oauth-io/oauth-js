@@ -260,7 +260,6 @@ module.exports = (oio, client_states, providers_api) ->
 
 		#checking if state is known
 		data.state = data.state.replace(/\s+/g,"")
-		console.log client_states
 		for k,v of client_states
 			client_states[k] = v.replace(/\s+/g,"")
 

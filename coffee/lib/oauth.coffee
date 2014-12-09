@@ -36,7 +36,10 @@ module.exports = (oio) ->
 
 	oauth = {
 		initialize: (public_key, options) -> return oio.initialize public_key, options
-
+		setOAuthdURL: (url) ->
+			config.oauthd_url = url
+			config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0]
+			return
 		create: (provider, tokens, request) ->
 			return cache.tryCache(oauth, provider, true)  unless tokens
 			providers_api.fetchDescription provider  if typeof request isnt "object"

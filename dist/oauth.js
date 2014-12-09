@@ -74,12 +74,12 @@ cookies = require("../tools/cookies");
 cache = require("../tools/cache");
 
 module.exports = function(window, document, jquery, navigator) {
-  var location_operations, oio;
+  var Materia, location_operations;
   Url = Url(document);
   cookies.init(config, document);
   location_operations = Location(document);
   cache.init(cookies, config);
-  oio = {
+  Materia = {
     initialize: function(public_key, options) {
       var i;
       config.key = public_key;
@@ -130,7 +130,7 @@ module.exports = function(window, document, jquery, navigator) {
       return location_operations;
     }
   };
-  return oio;
+  return Materia;
 };
 
 },{"../config":1,"../tools/cache":9,"../tools/cookies":10,"../tools/location_operations":12,"../tools/url":14}],4:[function(require,module,exports){
@@ -175,6 +175,10 @@ module.exports = function(oio) {
   oauth = {
     initialize: function(public_key, options) {
       return oio.initialize(public_key, options);
+    },
+    setOAuthdURL: function(url) {
+      config.oauthd_url = url;
+      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
     },
     create: function(provider, tokens, request) {
       var i, make_res, make_res_endpoint, res;
@@ -868,7 +872,6 @@ module.exports = function(oio, client_states, providers_api) {
         }
       }
       data.state = data.state.replace(/\s+/g, "");
-      console.log(client_states);
       for (k in client_states) {
         v = client_states[k];
         client_states[k] = v.replace(/\s+/g, "");
