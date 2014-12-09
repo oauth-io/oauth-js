@@ -4,3 +4,4 @@ coverage
 !/js/tools
 /js/tools/*
 !/js/tools/jquery-lite.js
+*sublime*

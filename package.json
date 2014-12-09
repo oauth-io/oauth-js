@@ -25,5 +25,8 @@
     "grunt-jasmine-node": "~0.2.1",
     "jasmine-node": "~2.0.x",
     "istanbul": "~0.2.7"
+  },
+  "dependencies": {
+    "q": "^1.0.1"
   }
 }

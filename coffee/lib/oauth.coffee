@@ -154,7 +154,7 @@ module.exports = (oio) ->
 			wndTimeout = setTimeout(->
 				defer?.reject new Error("Authorization timed out")
 				if opts.callback and typeof opts.callback == "function"
-					opts.callback new Error("Authorization timed out")  
+					opts.callback new Error("Authorization timed out")
 				try
 					wnd.close()
 				return

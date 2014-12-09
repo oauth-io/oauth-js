@@ -1,11 +1,41 @@
 "use strict"
 
 Url = require('../tools/url')()
+Q = require('q')
+
 
 module.exports = (oio, client_states, providers_api) ->
 	$ = oio.getJquery()
 	config = oio.getConfig()
 	cache = oio.getCache()
+	extended_methods = []
+
+
+	retrieveMethods: () ->
+		defer = Q.defer()
+		$.ajax(config.oauthd_url + '/api/extended-endpoints')
+			.then (data) ->
+				extended_methods = data.data
+				defer.resolve()
+			.fail (e) ->
+				defer.reject(e)
+
+
+		defer.promise
+
+	generateMethods: (request_object, tokens, provider) ->
+		if extended_methods?
+			for k, v of extended_methods
+				# v is a method to add
+				name_array = v.name.split '.'
+				pt = request_object
+				for kk,vv of name_array
+					if kk < name_array.length - 1
+						if not pt[vv]?
+							pt[vv] = {}
+						pt = pt[vv]
+					else
+						pt[vv] = @mkHttpAll provider, tokens, v, arguments
 
 	http: (opts) ->
 		doRequest = ->
@@ -108,6 +138,40 @@ module.exports = (oio, client_states, providers_api) ->
 			return doRequest()
 		return
 
+	http_all: (options, endpoint_descriptor, parameters) ->
+		doRequest = ->
+			defer = $.Deferred()
+			request = options.oauthio.request or {}
+			options.headers = options.headers or {}
+			options.headers.oauthio = "k=" + config.key
+			options.headers.oauthio += "&oauthv=1"  if options.oauthio.tokens.oauth_token and options.oauthio.tokens.oauth_token_secret # make sure to use oauth 1
+			for k of options.oauthio.tokens
+				options.headers.oauthio += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(options.oauthio.tokens[k])
+			delete options.oauthio
+
+
+			promise = $.ajax(options)
+			$.when(promise).done((data) ->
+
+				if typeof data.data == 'string'
+					try
+						data.data = JSON.parse data.data
+					catch error
+						data.data = data.data
+					finally
+						defer.resolve data.data
+				return
+			).fail (data) ->
+				if data.responseJSON
+					defer.reject data.responseJSON.data
+				else
+					defer.reject new Error("An error occured while trying to access the resource")
+				return
+
+			defer.promise()
+
+		return doRequest()
+
 	mkHttp: (provider, tokens, request, method) ->
 		base = this
 		(opts, opts2) ->
@@ -141,6 +205,24 @@ module.exports = (oio, client_states, providers_api) ->
 			options.data = options.data or {}
 			options.data.filter = (if filter then filter.join(",") else `undefined`)
 			base.http_me options
+
+	mkHttpAll: (provider, tokens, endpoint_descriptor) ->
+		base = this
+		() ->
+			options = {}
+			options.type = endpoint_descriptor.method
+			options.url = config.oauthd_url + endpoint_descriptor.endpoint.replace ':provider', provider
+			options.oauthio =
+				provider: provider
+				tokens: tokens
+			options.data = {}
+			for k, v of arguments
+				th_param = endpoint_descriptor.params[k]
+				if th_param?
+					options.data[th_param.name] = v
+
+			options.data = options.data or {}
+			base.http_all options, endpoint_descriptor, arguments
 
 	sendCallback: (opts, defer) ->
 		base = this
@@ -232,6 +314,9 @@ module.exports = (oio, client_states, providers_api) ->
 		res.patch = make_res("PATCH")
 		res.del = make_res("DELETE")
 		res.me = base.mkHttpMe(data.provider, tokens, request, "GET")
+
+		@generateMethods res, tokens, data.provider
+
 		defer.resolve res
 		if opts.callback and typeof opts.callback == "function"
 			opts.callback null, res
