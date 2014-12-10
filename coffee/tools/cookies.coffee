@@ -1,8 +1,10 @@
-### istanbul ignore next ###
+"use strict"
+
 module.exports =
 	init: (config, document) ->
 		@config = config
 		@document = document
+
 	createCookie: (name, value, expires) ->
 			@eraseCookie name
 			date = new Date()

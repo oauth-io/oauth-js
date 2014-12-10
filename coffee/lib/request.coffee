@@ -1,18 +1,29 @@
+"use strict"
+
 Url = require('../tools/url')()
 Q = require('q')
 
-module.exports = ($, config, client_states, cache, providers_api) ->
+
+module.exports = (Materia, client_states, providers_api) ->
+	$ = Materia.getJquery()
+	config = Materia.getConfig()
+	cache = Materia.getCache()
 	extended_methods = []
 
-
+	fetched_methods = false
 	retrieveMethods: () ->
 		defer = Q.defer()
-		$.ajax(config.oauthd_url + '/api/extended-endpoints')
-			.then (data) ->
-				extended_methods = data.data
-				defer.resolve()
-			.fail (e) ->
-				defer.reject(e)
+		if not fetched_methods
+			$.ajax(config.oauthd_url + '/api/extended-endpoints')
+				.then (data) ->
+					extended_methods = data.data
+					fetched_methods = true
+					defer.resolve()
+				.fail (e) ->
+					fetched_methods = true
+					defer.reject(e)
+		else
+			defer.resolve extended_methods
 
 
 		defer.promise
@@ -163,7 +174,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 				return
 
 			defer.promise()
-		
+
 		return doRequest()
 
 	mkHttp: (provider, tokens, request, method) ->
@@ -205,7 +216,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		() ->
 			options = {}
 			options.type = endpoint_descriptor.method
-			options.url = config.oauthd_url + endpoint_descriptor.endpoint.replace ':provider', provider 
+			options.url = config.oauthd_url + endpoint_descriptor.endpoint.replace ':provider', provider
 			options.oauthio =
 				provider: provider
 				tokens: tokens
@@ -265,6 +276,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 				return
 		data.data.provider = data.provider  unless opts.provider
 		res = data.data
+		res.provider = data.provider.toLowerCase()
 		cache.storeCache data.provider, res  if cache.cacheEnabled(opts.cache) and res
 		request = res.request
 		delete res.request
@@ -288,6 +300,18 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		make_res = (method) ->
 			base.mkHttp data.provider, tokens, request, method
 
+		res.toJson = ->
+			a = {}
+			a.access_token = res.access_token if res.access_token?
+			a.oauth_token = res.oauth_token if res.oauth_token?
+			a.oauth_token_secret = res.oauth_token_secret if res.oauth_token_secret?
+			a.expires_in = res.expires_in if res.expires_in?
+			a.token_type = res.token_type if res.token_type?
+			a.id_token = res.id_token if res.id_token?
+			a.provider = res.provider if res.provider?
+			a.email = res.email if res.email?
+			return a
+
 		res.get = make_res("GET")
 		res.post = make_res("POST")
 		res.put = make_res("PUT")
@@ -295,10 +319,18 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 		res.del = make_res("DELETE")
 		res.me = base.mkHttpMe(data.provider, tokens, request, "GET")
 
-		@generateMethods res, tokens, data.provider
-
-		defer.resolve res
-		if opts.callback and typeof opts.callback == "function"
-			opts.callback null, res
-		else
-			return
+		@retrieveMethods()
+			.then () =>
+				@generateMethods res, tokens, data.provider
+				defer.resolve res
+				if opts.callback and typeof opts.callback == "function"
+					opts.callback null, res
+				else
+					return
+			.fail (e) =>
+				console.log 'Could not retrieve methods', e
+				defer.resolve res
+				if opts.callback and typeof opts.callback == "function"
+					opts.callback null, res
+				else
+					return
