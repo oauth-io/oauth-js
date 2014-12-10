@@ -966,7 +966,6 @@ module.exports = function(Materia, client_states, providers_api) {
       return this.retrieveMethods().then((function(_this) {
         return function() {
           _this.generateMethods(res, tokens, data.provider);
-          console.log('Fetched methods');
           defer.resolve(res);
           if (opts.callback && typeof opts.callback === "function") {
             return opts.callback(null, res);

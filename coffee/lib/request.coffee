@@ -322,7 +322,6 @@ module.exports = (Materia, client_states, providers_api) ->
 		@retrieveMethods()
 			.then () =>
 				@generateMethods res, tokens, data.provider
-				console.log 'Fetched methods'
 				defer.resolve res
 				if opts.callback and typeof opts.callback == "function"
 					opts.callback null, res
