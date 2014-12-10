@@ -1,28 +1,28 @@
 "use strict"
 
-module.exports = (oio) ->
-	$ = oio.getJquery()
+module.exports = (Materia) ->
+	$ = Materia.getJquery()
 	return {
 		get: (url, params) =>
-			base = oio.getOAuthdURL()
+			base = Materia.getOAuthdURL()
 			$.ajax
 				url: base + url
 				type: 'get'
 				data: params
 		post: (url, params) =>
-			base = oio.getOAuthdURL()
+			base = Materia.getOAuthdURL()
 			$.ajax
 				url: base + url
 				type: 'post'
 				data: params
 		put: (url, params) =>
-			base = oio.getOAuthdURL()
+			base = Materia.getOAuthdURL()
 			$.ajax
 				url: base + url
 				type: 'put'
 				data: params
 		del: (url, params) =>
-			base = oio.getOAuthdURL()
+			base = Materia.getOAuthdURL()
 			$.ajax
 				url: base + url
 				type: 'delete'

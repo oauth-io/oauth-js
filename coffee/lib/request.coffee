@@ -4,10 +4,10 @@ Url = require('../tools/url')()
 Q = require('q')
 
 
-module.exports = (oio, client_states, providers_api) ->
-	$ = oio.getJquery()
-	config = oio.getConfig()
-	cache = oio.getCache()
+module.exports = (Materia, client_states, providers_api) ->
+	$ = Materia.getJquery()
+	config = Materia.getConfig()
+	cache = Materia.getCache()
 	extended_methods = []
 
 	fetched_methods = false

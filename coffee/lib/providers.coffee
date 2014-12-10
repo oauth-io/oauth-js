@@ -2,8 +2,8 @@
 
 config = require("../config")
 
-module.exports = (oio) ->
-	$ = oio.getJquery()
+module.exports = (Materia) ->
+	$ = Materia.getJquery()
 
 	providers_desc = {}
 	providers_cb = {}
