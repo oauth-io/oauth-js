@@ -542,21 +542,28 @@ Url = require('../tools/url')();
 Q = require('q');
 
 module.exports = function(oio, client_states, providers_api) {
-  var $, cache, config, extended_methods;
+  var $, cache, config, extended_methods, fetched_methods;
   $ = oio.getJquery();
   config = oio.getConfig();
   cache = oio.getCache();
   extended_methods = [];
+  fetched_methods = false;
   return {
     retrieveMethods: function() {
       var defer;
       defer = Q.defer();
-      $.ajax(config.oauthd_url + '/api/extended-endpoints').then(function(data) {
-        extended_methods = data.data;
-        return defer.resolve();
-      }).fail(function(e) {
-        return defer.reject(e);
-      });
+      if (!fetched_methods) {
+        $.ajax(config.oauthd_url + '/api/extended-endpoints').then(function(data) {
+          extended_methods = data.data;
+          fetched_methods = true;
+          return defer.resolve();
+        }).fail(function(e) {
+          fetched_methods = true;
+          return defer.reject(e);
+        });
+      } else {
+        defer.resolve(extended_methods);
+      }
       return defer.promise;
     },
     generateMethods: function(request_object, tokens, provider) {
@@ -956,13 +963,28 @@ module.exports = function(oio, client_states, providers_api) {
       res.patch = make_res("PATCH");
       res.del = make_res("DELETE");
       res.me = base.mkHttpMe(data.provider, tokens, request, "GET");
-      this.generateMethods(res, tokens, data.provider);
-      defer.resolve(res);
-      if (opts.callback && typeof opts.callback === "function") {
-        return opts.callback(null, res);
-      } else {
+      return this.retrieveMethods().then((function(_this) {
+        return function() {
+          _this.generateMethods(res, tokens, data.provider);
+          console.log('Fetched methods');
+          defer.resolve(res);
+          if (opts.callback && typeof opts.callback === "function") {
+            return opts.callback(null, res);
+          } else {
 
-      }
+          }
+        };
+      })(this)).fail((function(_this) {
+        return function(e) {
+          console.log('Could not retrieve methods', e);
+          defer.resolve(res);
+          if (opts.callback && typeof opts.callback === "function") {
+            return opts.callback(null, res);
+          } else {
+
+          }
+        };
+      })(this));
     }
   };
 };

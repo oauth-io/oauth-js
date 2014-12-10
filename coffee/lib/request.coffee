@@ -10,15 +10,20 @@ module.exports = (oio, client_states, providers_api) ->
 	cache = oio.getCache()
 	extended_methods = []
 
-
+	fetched_methods = false
 	retrieveMethods: () ->
 		defer = Q.defer()
-		$.ajax(config.oauthd_url + '/api/extended-endpoints')
-			.then (data) ->
-				extended_methods = data.data
-				defer.resolve()
-			.fail (e) ->
-				defer.reject(e)
+		if not fetched_methods
+			$.ajax(config.oauthd_url + '/api/extended-endpoints')
+				.then (data) ->
+					extended_methods = data.data
+					fetched_methods = true
+					defer.resolve()
+				.fail (e) ->
+					fetched_methods = true
+					defer.reject(e)
+		else
+			defer.resolve extended_methods
 
 
 		defer.promise
@@ -314,10 +319,19 @@ module.exports = (oio, client_states, providers_api) ->
 		res.del = make_res("DELETE")
 		res.me = base.mkHttpMe(data.provider, tokens, request, "GET")
 
-		@generateMethods res, tokens, data.provider
-
-		defer.resolve res
-		if opts.callback and typeof opts.callback == "function"
-			opts.callback null, res
-		else
-			return
+		@retrieveMethods()
+			.then () =>
+				@generateMethods res, tokens, data.provider
+				console.log 'Fetched methods'
+				defer.resolve res
+				if opts.callback and typeof opts.callback == "function"
+					opts.callback null, res
+				else
+					return
+			.fail (e) =>
+				console.log 'Could not retrieve methods', e
+				defer.resolve res
+				if opts.callback and typeof opts.callback == "function"
+					opts.callback null, res
+				else
+					return
