@@ -8,14 +8,14 @@ module.exports = {
 
 },{}],2:[function(require,module,exports){
 "use strict";
-module.exports = function(oio) {
+module.exports = function(Materia) {
   var $;
-  $ = oio.getJquery();
+  $ = Materia.getJquery();
   return {
     get: (function(_this) {
       return function(url, params) {
         var base;
-        base = oio.getOAuthdURL();
+        base = Materia.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'get',
@@ -26,7 +26,7 @@ module.exports = function(oio) {
     post: (function(_this) {
       return function(url, params) {
         var base;
-        base = oio.getOAuthdURL();
+        base = Materia.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'post',
@@ -37,7 +37,7 @@ module.exports = function(oio) {
     put: (function(_this) {
       return function(url, params) {
         var base;
-        base = oio.getOAuthdURL();
+        base = Materia.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'put',
@@ -48,7 +48,7 @@ module.exports = function(oio) {
     del: (function(_this) {
       return function(url, params) {
         var base;
-        base = oio.getOAuthdURL();
+        base = Materia.getOAuthdURL();
         return $.ajax({
           url: base + url,
           type: 'delete',
@@ -143,15 +143,15 @@ oauthio_requests = require("./request");
 
 sha1 = require("../tools/sha1");
 
-module.exports = function(oio) {
+module.exports = function(Materia) {
   var $, Url, cache, client_states, config, document, location_operations, oauth, oauth_result, oauthio, parse_urlfragment, providers_api, window;
-  Url = oio.getUrl();
-  config = oio.getConfig();
-  document = oio.getDocument();
-  window = oio.getWindow();
-  $ = oio.getJquery();
-  cache = oio.getCache();
-  providers_api = require('./providers')(oio);
+  Url = Materia.getUrl();
+  config = Materia.getConfig();
+  document = Materia.getDocument();
+  window = Materia.getWindow();
+  $ = Materia.getJquery();
+  cache = Materia.getCache();
+  providers_api = require('./providers')(Materia);
   config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
   client_states = [];
   oauth_result = void 0;
@@ -168,13 +168,13 @@ module.exports = function(oio) {
       }
     }
   })();
-  location_operations = oio.getLocationOperations();
+  location_operations = Materia.getLocationOperations();
   oauthio = {
-    request: oauthio_requests(oio, client_states, providers_api)
+    request: oauthio_requests(Materia, client_states, providers_api)
   };
   oauth = {
     initialize: function(public_key, options) {
-      return oio.initialize(public_key, options);
+      return Materia.initialize(public_key, options);
     },
     setOAuthdURL: function(url) {
       config.oauthd_url = url;
@@ -477,9 +477,9 @@ var config;
 
 config = require("../config");
 
-module.exports = function(oio) {
+module.exports = function(Materia) {
   var $, providers_api, providers_cb, providers_desc;
-  $ = oio.getJquery();
+  $ = Materia.getJquery();
   providers_desc = {};
   providers_cb = {};
   providers_api = {
@@ -541,11 +541,11 @@ Url = require('../tools/url')();
 
 Q = require('q');
 
-module.exports = function(oio, client_states, providers_api) {
+module.exports = function(Materia, client_states, providers_api) {
   var $, cache, config, extended_methods, fetched_methods;
-  $ = oio.getJquery();
-  config = oio.getConfig();
-  cache = oio.getCache();
+  $ = Materia.getJquery();
+  config = Materia.getConfig();
+  cache = Materia.getCache();
   extended_methods = [];
   fetched_methods = false;
   return {
@@ -991,11 +991,11 @@ module.exports = function(oio, client_states, providers_api) {
 
 },{"../tools/url":14,"q":16}],7:[function(require,module,exports){
 "use strict";
-module.exports = function(oio) {
+module.exports = function(Materia) {
   var $, UserObject, config, cookieStore, lastSave;
-  $ = oio.getJquery();
-  config = oio.getConfig();
-  cookieStore = oio.getCookies();
+  $ = Materia.getJquery();
+  config = Materia.getConfig();
+  cookieStore = Materia.getCookies();
   lastSave = null;
   UserObject = (function() {
     function UserObject(data) {
@@ -1049,7 +1049,7 @@ module.exports = function(oio) {
         }
       }
       this.saveLocal();
-      return oio.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
+      return Materia.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
     };
 
     UserObject.prototype.select = function(provider) {
@@ -1077,7 +1077,7 @@ module.exports = function(oio) {
     UserObject.prototype.getProviders = function() {
       var defer;
       defer = $.Deferred();
-      oio.API.get('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token).done((function(_this) {
+      Materia.API.get('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token).done((function(_this) {
         return function(providers) {
           _this.providers = providers.data;
           _this.saveLocal();
@@ -1097,7 +1097,7 @@ module.exports = function(oio) {
       }
       oauthRes.email = this.data.email;
       this.providers.push(oauthRes.provider);
-      oio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
+      Materia.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
         return function(res) {
           _this.data = res.data;
           _this.saveLocal();
@@ -1116,7 +1116,7 @@ module.exports = function(oio) {
       var defer;
       defer = $.Deferred();
       this.providers.splice(this.providers.indexOf(provider), 1);
-      oio.API.del('/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + this.token).done((function(_this) {
+      Materia.API.del('/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + this.token).done((function(_this) {
         return function(res) {
           _this.saveLocal();
           return defer.resolve(res);
@@ -1131,20 +1131,20 @@ module.exports = function(oio) {
     };
 
     UserObject.prototype.changePassword = function(oldPassword, newPassword) {
-      return oio.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
+      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
         password: newPassword
       });
     };
 
     UserObject.prototype.isLoggued = function() {
-      return oio.User.isLogged();
+      return Materia.User.isLogged();
     };
 
     UserObject.prototype.logout = function() {
       var defer;
       defer = $.Deferred();
       cookieStore.eraseCookie('oio_auth');
-      oio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
+      Materia.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
         return defer.resolve();
       }).fail(function(err) {
         return defer.reject(err);
@@ -1157,10 +1157,10 @@ module.exports = function(oio) {
   })();
   return {
     initialize: function(public_key, options) {
-      return oio.initialize(public_key, options);
+      return Materia.initialize(public_key, options);
     },
     setOAuthdURL: function(url) {
-      return oio.setOAuthdURL(url);
+      return Materia.setOAuthdURL(url);
     },
     signup: function(data) {
       var defer;
@@ -1168,7 +1168,7 @@ module.exports = function(oio) {
       if (typeof data.toJson === 'function') {
         data = data.toJson();
       }
-      oio.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
+      Materia.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
         cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
@@ -1184,14 +1184,14 @@ module.exports = function(oio) {
         if (typeof signinData.toJson === 'function') {
           signinData = signinData.toJson();
         }
-        oio.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
+        Materia.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
           cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.reject(err);
         });
       } else {
-        oio.API.post('/api/usermanagement/signin?k=' + config.key, {
+        Materia.API.post('/api/usermanagement/signin?k=' + config.key, {
           email: email,
           password: password
         }).done(function(res) {
@@ -1204,20 +1204,20 @@ module.exports = function(oio) {
       return defer.promise();
     },
     confirmResetPassword: function(newPassword, key) {
-      return oio.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
+      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
         password: newPassword,
         passwordKey: key
       });
     },
     resetPassword: function(email, callback) {
-      return oio.API.post('/api/usermanagement/password/reset?k=' + config.key, {
+      return Materia.API.post('/api/usermanagement/password/reset?k=' + config.key, {
         email: email
       });
     },
     refreshIdentity: function() {
       var defer;
       defer = $.Deferred();
-      oio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth')).done(function(res) {
+      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth')).done(function(res) {
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.reject(err);
