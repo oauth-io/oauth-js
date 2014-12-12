@@ -19,11 +19,11 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 
 	generateMethods: (request_object, tokens, provider) ->
 		if extended_methods?
-			for k, v of extended_methods
+			for v, k in extended_methods
 				# v is a method to add
 				name_array = v.name.split '.'
 				pt = request_object
-				for kk,vv of name_array
+				for vv,kk in name_array
 					if kk < name_array.length - 1
 						if not pt[vv]?
 							pt[vv] = {}
@@ -254,7 +254,7 @@ module.exports = ($, config, client_states, cache, providers_api) ->
 
 		#checking if state is known
 		data.state = data.state.replace(/\s+/g,"")
-		for k,v of client_states
+		for v, k in client_states
 			client_states[k] = v.replace(/\s+/g,"")
 
 		if not data.state or client_states.indexOf(data.state) == -1
