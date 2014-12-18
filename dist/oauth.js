@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.3.0",
+  version: "web-0.4.0",
   options: {}
 };
 
@@ -466,6 +466,9 @@ module.exports = function(Materia) {
       if (oauthio.request.http) {
         oauthio.request.http(opts);
       }
+    },
+    getVersion: function() {
+      return Materia.getVersion.apply(this);
     }
   };
   return oauth;

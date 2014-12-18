@@ -245,5 +245,7 @@ module.exports = (Materia) ->
 		http: (opts) ->
 			oauthio.request.http opts  if oauthio.request.http
 			return
+		getVersion: () ->
+			Materia.getVersion.apply this
 	}
 	return oauth
