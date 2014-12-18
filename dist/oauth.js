@@ -210,15 +210,18 @@ module.exports = function(Materia) {
       var defer, frm, getMessage, gotmessage, interval, res, url, wnd, wndTimeout, wnd_options, wnd_settings;
       gotmessage = false;
       getMessage = function(e) {
-        if (e.origin !== config.oauthd_base) {
-          return;
+        if (!gotmessage) {
+          console.log('GOT MESSAGE', e);
+          if (e.origin !== config.oauthd_base) {
+            return;
+          }
+          try {
+            wnd.close();
+          } catch (_error) {}
+          opts.data = e.data;
+          oauthio.request.sendCallback(opts, defer);
+          return gotmessage = true;
         }
-        try {
-          wnd.close();
-        } catch (_error) {}
-        opts.data = e.data;
-        oauthio.request.sendCallback(opts, defer);
-        return gotmessage = true;
       };
       wnd = void 0;
       frm = void 0;

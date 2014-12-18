@@ -64,12 +64,14 @@ module.exports = (Materia) ->
 		popup: (provider, opts, callback) ->
 			gotmessage = false
 			getMessage = (e) ->
-				return  if e.origin isnt config.oauthd_base
-				try
-					wnd.close()
-				opts.data = e.data
-				oauthio.request.sendCallback opts, defer
-				gotmessage = true
+				if not gotmessage
+					console.log 'GOT MESSAGE', e
+					return  if e.origin isnt config.oauthd_base
+					try
+						wnd.close()
+					opts.data = e.data
+					oauthio.request.sendCallback opts, defer
+					gotmessage = true
 			wnd = undefined
 			frm = undefined
 			wndTimeout = undefined
