@@ -65,7 +65,6 @@ module.exports = (Materia) ->
 			gotmessage = false
 			getMessage = (e) ->
 				if not gotmessage
-					console.log 'GOT MESSAGE', e
 					return  if e.origin isnt config.oauthd_base
 					try
 						wnd.close()

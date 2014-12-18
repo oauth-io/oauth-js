@@ -211,7 +211,6 @@ module.exports = function(Materia) {
       gotmessage = false;
       getMessage = function(e) {
         if (!gotmessage) {
-          console.log('GOT MESSAGE', e);
           if (e.origin !== config.oauthd_base) {
             return;
           }
