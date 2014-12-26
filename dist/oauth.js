@@ -689,7 +689,9 @@ module.exports = function($, config, client_states, cache, providers_api) {
           request: request
         };
         options.data = options.data || {};
-        options.data.filter = (filter ? filter.join(",") : undefined);
+        if (filter) {
+          options.data.filter = filter.join(",");
+        }
         return base.http_me(options);
       };
     },
