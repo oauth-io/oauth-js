@@ -40,7 +40,7 @@ Usage
 
 To connect your user using facebook, 2 methods:
 
-Mode popup
+Popup mode
 ----------
 
  ```javascript
@@ -55,7 +55,7 @@ OAuth.popup('facebook')
 });
  ```
 
-Mode redirection
+Redirection mode
 ----------------
 
  ```javascript
