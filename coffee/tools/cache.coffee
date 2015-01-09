@@ -1,3 +1,5 @@
+"use strict"
+
 module.exports =
 	init: (cookies_module, config) ->
 		@config = config
