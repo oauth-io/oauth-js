@@ -160,7 +160,7 @@ module.exports = (Materia) ->
 
 		refreshIdentity: () ->
 			defer = $.Deferred()
-			Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth'))
+			Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookieStore.readCookie('oio_auth')).token)
 				.done (res) ->
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->
