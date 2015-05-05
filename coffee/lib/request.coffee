@@ -265,8 +265,10 @@ module.exports = (Materia, client_states, providers_api) ->
 
 		#checking if state is known
 		data.state = data.state.replace(/\s+/g,"")
-		for k,v of client_states
-			client_states[k] = v.replace(/\s+/g,"")
+		i = 0
+		while i < client_states.length
+		  client_states[i] = client_states[i].replace(/\s+/g,"")
+		  i++
 
 		if not data.state or client_states.indexOf(data.state) == -1
 			defer.reject new Error("State is not matching")
