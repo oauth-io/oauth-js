@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.0",
+  version: "web-0.4.1",
   options: {}
 };
 
@@ -273,18 +273,14 @@ module.exports = function(Materia) {
           height: Math.floor(window.outerHeight * 0.5)
         };
       }
-      if (wnd_settings.height == null) {
-        wnd_settings.height = (wnd_settings.height < 350 ? 350 : void 0);
+      if (wnd_settings.width < 1000) {
+        wnd_settings.width = 1000;
       }
-      if (wnd_settings.width == null) {
-        wnd_settings.width = (wnd_settings.width < 800 ? 800 : void 0);
+      if (wnd_settings.height < 630) {
+        wnd_settings.height = 630;
       }
-      if (wnd_settings.left == null) {
-        wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2;
-      }
-      if (wnd_settings.top == null) {
-        wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8;
-      }
+      wnd_settings.left = Math.floor(window.screenX + (window.outerWidth - wnd_settings.width) / 2);
+      wnd_settings.top = Math.floor(window.screenY + (window.outerHeight - wnd_settings.height) / 8);
       wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height;
       wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0";
       wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top;
@@ -325,9 +321,6 @@ module.exports = function(Materia) {
       if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessageExternal) {
         chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
           request.origin = sender.url.match(/^.{2,5}:\/\/[^/]+/)[0];
-          if (defer != null) {
-            defer.resolve();
-          }
           return getMessage(request);
         });
       }
@@ -1368,7 +1361,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-09-24T13:40Z
+ * Date: 2015-05-05T14:38Z
  */
 
 (function( global, factory ) {
@@ -5508,7 +5501,7 @@ process.chdir = function (dir) {
         self.Q = definition();
 
     } else {
-        throw new Error("This environment was not anticiapted by Q. Please file a bug.");
+        throw new Error("This environment was not anticipated by Q. Please file a bug.");
     }
 
 })(function () {
@@ -5540,57 +5533,67 @@ var nextTick =(function () {
     var flushing = false;
     var requestTick = void 0;
     var isNodeJS = false;
+    // queue for late tasks, used by unhandled rejection tracking
+    var laterQueue = [];
 
     function flush() {
         /* jshint loopfunc: true */
+        var task, domain;
 
         while (head.next) {
             head = head.next;
-            var task = head.task;
+            task = head.task;
             head.task = void 0;
-            var domain = head.domain;
+            domain = head.domain;
 
             if (domain) {
                 head.domain = void 0;
                 domain.enter();
             }
+            runSingle(task, domain);
 
-            try {
-                task();
+        }
+        while (laterQueue.length) {
+            task = laterQueue.pop();
+            runSingle(task);
+        }
+        flushing = false;
+    }
+    // runs a single function in the async queue
+    function runSingle(task, domain) {
+        try {
+            task();
 
-            } catch (e) {
-                if (isNodeJS) {
-                    // In node, uncaught exceptions are considered fatal errors.
-                    // Re-throw them synchronously to interrupt flushing!
+        } catch (e) {
+            if (isNodeJS) {
+                // In node, uncaught exceptions are considered fatal errors.
+                // Re-throw them synchronously to interrupt flushing!
 
-                    // Ensure continuation if the uncaught exception is suppressed
-                    // listening "uncaughtException" events (as domains does).
-                    // Continue in next event to avoid tick recursion.
-                    if (domain) {
-                        domain.exit();
-                    }
-                    setTimeout(flush, 0);
-                    if (domain) {
-                        domain.enter();
-                    }
-
-                    throw e;
-
-                } else {
-                    // In browsers, uncaught exceptions are not fatal.
-                    // Re-throw them asynchronously to avoid slow-downs.
-                    setTimeout(function() {
-                       throw e;
-                    }, 0);
+                // Ensure continuation if the uncaught exception is suppressed
+                // listening "uncaughtException" events (as domains does).
+                // Continue in next event to avoid tick recursion.
+                if (domain) {
+                    domain.exit();
                 }
-            }
+                setTimeout(flush, 0);
+                if (domain) {
+                    domain.enter();
+                }
 
-            if (domain) {
-                domain.exit();
+                throw e;
+
+            } else {
+                // In browsers, uncaught exceptions are not fatal.
+                // Re-throw them asynchronously to avoid slow-downs.
+                setTimeout(function () {
+                    throw e;
+                }, 0);
             }
         }
 
-        flushing = false;
+        if (domain) {
+            domain.exit();
+        }
     }
 
     nextTick = function (task) {
@@ -5606,9 +5609,16 @@ var nextTick =(function () {
         }
     };
 
-    if (typeof process !== "undefined" && process.nextTick) {
-        // Node.js before 0.9. Note that some fake-Node environments, like the
-        // Mocha test runner, introduce a `process` global without a `nextTick`.
+    if (typeof process === "object" &&
+        process.toString() === "[object process]" && process.nextTick) {
+        // Ensure Q is in a real Node environment, with a `process.nextTick`.
+        // To see through fake Node environments:
+        // * Mocha test runner - exposes a `process` global without a `nextTick`
+        // * Browserify - exposes a `process.nexTick` function that uses
+        //   `setTimeout`. In this case `setImmediate` is preferred because
+        //    it is faster. Browserify's `process.toString()` yields
+        //   "[object Object]", while in a real Node environment
+        //   `process.nextTick()` yields "[object process]".
         isNodeJS = true;
 
         requestTick = function () {
@@ -5652,7 +5662,16 @@ var nextTick =(function () {
             setTimeout(flush, 0);
         };
     }
-
+    // runs a task after all other tasks have been run
+    // this is useful for unhandled rejection tracking that needs to happen
+    // after all `then`d tasks have been run.
+    nextTick.runAfter = function (task) {
+        laterQueue.push(task);
+        if (!flushing) {
+            flushing = true;
+            requestTick();
+        }
+    };
     return nextTick;
 })();
 
@@ -6146,9 +6165,9 @@ Promise.prototype.join = function (that) {
  */
 Q.race = race;
 function race(answerPs) {
-    return promise(function(resolve, reject) {
+    return promise(function (resolve, reject) {
         // Switch to this once we can assume at least ES5
-        // answerPs.forEach(function(answerP) {
+        // answerPs.forEach(function (answerP) {
         //     Q(answerP).then(resolve, reject);
         // });
         // Use this in the meantime
@@ -6446,6 +6465,7 @@ Promise.prototype.isRejected = function () {
 // shimmed environments, this would naturally be a `Set`.
 var unhandledReasons = [];
 var unhandledRejections = [];
+var reportedUnhandledRejections = [];
 var trackUnhandledRejections = true;
 
 function resetUnhandledRejections() {
@@ -6460,6 +6480,14 @@ function resetUnhandledRejections() {
 function trackRejection(promise, reason) {
     if (!trackUnhandledRejections) {
         return;
+    }
+    if (typeof process === "object" && typeof process.emit === "function") {
+        Q.nextTick.runAfter(function () {
+            if (array_indexOf(unhandledRejections, promise) !== -1) {
+                process.emit("unhandledRejection", reason, promise);
+                reportedUnhandledRejections.push(promise);
+            }
+        });
     }
 
     unhandledRejections.push(promise);
@@ -6477,6 +6505,15 @@ function untrackRejection(promise) {
 
     var at = array_indexOf(unhandledRejections, promise);
     if (at !== -1) {
+        if (typeof process === "object" && typeof process.emit === "function") {
+            Q.nextTick.runAfter(function () {
+                var atReport = array_indexOf(reportedUnhandledRejections, promise);
+                if (atReport !== -1) {
+                    process.emit("rejectionHandled", unhandledReasons[at], promise);
+                    reportedUnhandledRejections.splice(atReport, 1);
+                }
+            });
+        }
         unhandledRejections.splice(at, 1);
         unhandledReasons.splice(at, 1);
     }
@@ -6951,7 +6988,7 @@ Promise.prototype.keys = function () {
 Q.all = all;
 function all(promises) {
     return when(promises, function (promises) {
-        var countDown = 0;
+        var pendingCount = 0;
         var deferred = defer();
         array_reduce(promises, function (undefined, promise, index) {
             var snapshot;
@@ -6961,12 +6998,12 @@ function all(promises) {
             ) {
                 promises[index] = snapshot.value;
             } else {
-                ++countDown;
+                ++pendingCount;
                 when(
                     promise,
                     function (value) {
                         promises[index] = value;
-                        if (--countDown === 0) {
+                        if (--pendingCount === 0) {
                             deferred.resolve(promises);
                         }
                     },
@@ -6977,7 +7014,7 @@ function all(promises) {
                 );
             }
         }, void 0);
-        if (countDown === 0) {
+        if (pendingCount === 0) {
             deferred.resolve(promises);
         }
         return deferred.promise;
@@ -6986,6 +7023,55 @@ function all(promises) {
 
 Promise.prototype.all = function () {
     return all(this);
+};
+
+/**
+ * Returns the first resolved promise of an array. Prior rejected promises are
+ * ignored.  Rejects only if all promises are rejected.
+ * @param {Array*} an array containing values or promises for values
+ * @returns a promise fulfilled with the value of the first resolved promise,
+ * or a rejected promise if all promises are rejected.
+ */
+Q.any = any;
+
+function any(promises) {
+    if (promises.length === 0) {
+        return Q.resolve();
+    }
+
+    var deferred = Q.defer();
+    var pendingCount = 0;
+    array_reduce(promises, function (prev, current, index) {
+        var promise = promises[index];
+
+        pendingCount++;
+
+        when(promise, onFulfilled, onRejected, onProgress);
+        function onFulfilled(result) {
+            deferred.resolve(result);
+        }
+        function onRejected() {
+            pendingCount--;
+            if (pendingCount === 0) {
+                deferred.reject(new Error(
+                    "Can't get fulfillment value from any promise, all " +
+                    "promises were rejected."
+                ));
+            }
+        }
+        function onProgress(progress) {
+            deferred.notify({
+                index: index,
+                value: progress
+            });
+        }
+    }, undefined);
+
+    return deferred.promise;
+}
+
+Promise.prototype.any = function () {
+    return any(this);
 };
 
 /**
@@ -7385,5 +7471,5 @@ return Q;
 
 });
 
-}).call(this,require("/Users/antoine/projects/oauth-js/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/antoine/projects/oauth-js/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":15}]},{},[8])
+}).call(this,require("/Users/bumpmann/Desktop/projects/oauth-js-github/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/Users/bumpmann/Desktop/projects/oauth-js-github/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":15}]},{},[8])

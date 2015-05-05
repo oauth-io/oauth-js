@@ -108,14 +108,10 @@ module.exports = (Materia) ->
 				wnd_settings =
 					width: Math.floor(window.outerWidth * 0.8)
 					height: Math.floor(window.outerHeight * 0.5)
-			if not wnd_settings.height?
-				wnd_settings.height = (350  if wnd_settings.height < 350)
-			if not wnd_settings.width?
-				wnd_settings.width = (800  if wnd_settings.width < 800)
-			if not wnd_settings.left?
-				wnd_settings.left = window.screenX + (window.outerWidth - wnd_settings.width) / 2
-			if not wnd_settings.top?
-				wnd_settings.top = window.screenY + (window.outerHeight - wnd_settings.height) / 8
+			wnd_settings.width = 1000 if wnd_settings.width < 1000
+			wnd_settings.height = 630 if wnd_settings.height < 630
+			wnd_settings.left = Math.floor(window.screenX + (window.outerWidth - wnd_settings.width) / 2)
+			wnd_settings.top = Math.floor(window.screenY + (window.outerHeight - wnd_settings.height) / 8)
 			wnd_options = "width=" + wnd_settings.width + ",height=" + wnd_settings.height
 			wnd_options += ",toolbar=0,scrollbars=1,status=1,resizable=1,location=1,menuBar=0"
 			wnd_options += ",left=" + wnd_settings.left + ",top=" + wnd_settings.top
@@ -144,7 +140,6 @@ module.exports = (Materia) ->
 			if typeof chrome isnt "undefined" and chrome.runtime and chrome.runtime.onMessageExternal
 				chrome.runtime.onMessageExternal.addListener (request, sender, sendResponse) ->
 					request.origin = sender.url.match(/^.{2,5}:\/\/[^/]+/)[0]
-					defer?.resolve()
 					getMessage request
 
 			if not frm and (navigator.userAgent.indexOf("MSIE") isnt -1 or navigator.appVersion.indexOf("Trident/") > 0)
