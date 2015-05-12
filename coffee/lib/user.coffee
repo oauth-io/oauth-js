@@ -98,7 +98,12 @@ module.exports = (Materia) ->
 				password: newPassword
 				#oldPassword ?
 
+		#### 0.5.0 => remove this method
 		isLoggued: () ->
+			return Materia.User.isLogged()
+		###########
+
+		isLogged: () ->
 			return Materia.User.isLogged()
 
 		logout: () ->
