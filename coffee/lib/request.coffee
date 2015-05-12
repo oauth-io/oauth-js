@@ -208,7 +208,7 @@ module.exports = (Materia, client_states, providers_api) ->
 				request: request
 
 			options.data = options.data or {}
-			options.data.filter = (if filter then filter.join(",") else `undefined`)
+			options.data.filter = filter.join(",") if filter
 			base.http_me options
 
 	mkHttpAll: (provider, tokens, endpoint_descriptor) ->
