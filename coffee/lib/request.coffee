@@ -30,11 +30,11 @@ module.exports = (Materia, client_states, providers_api) ->
 
 	generateMethods: (request_object, tokens, provider) ->
 		if extended_methods?
-			for k, v of extended_methods
+			for v, k in extended_methods
 				# v is a method to add
 				name_array = v.name.split '.'
 				pt = request_object
-				for kk,vv of name_array
+				for vv, kk in name_array
 					if kk < name_array.length - 1
 						if not pt[vv]?
 							pt[vv] = {}
