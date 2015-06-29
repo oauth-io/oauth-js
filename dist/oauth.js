@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.2",
+  version: "web-0.4.3",
   options: {}
 };
 
@@ -565,17 +565,17 @@ module.exports = function(Materia, client_states, providers_api) {
       return defer.promise;
     },
     generateMethods: function(request_object, tokens, provider) {
-      var k, kk, name_array, pt, v, vv, _results;
+      var k, kk, name_array, pt, v, vv, _i, _len, _results;
       if (extended_methods != null) {
         _results = [];
-        for (k in extended_methods) {
+        for (k = _i = 0, _len = extended_methods.length; _i < _len; k = ++_i) {
           v = extended_methods[k];
           name_array = v.name.split('.');
           pt = request_object;
           _results.push((function() {
-            var _results1;
+            var _j, _len1, _results1;
             _results1 = [];
-            for (kk in name_array) {
+            for (kk = _j = 0, _len1 = name_array.length; _j < _len1; kk = ++_j) {
               vv = name_array[kk];
               if (kk < name_array.length - 1) {
                 if (pt[vv] == null) {
@@ -804,7 +804,9 @@ module.exports = function(Materia, client_states, providers_api) {
           request: request
         };
         options.data = options.data || {};
-        options.data.filter = (filter ? filter.join(",") : undefined);
+        if (filter) {
+          options.data.filter = filter.join(",");
+        }
         return base.http_me(options);
       };
     },
@@ -1138,6 +1140,10 @@ module.exports = function(Materia) {
       return Materia.User.isLogged();
     };
 
+    UserObject.prototype.isLogged = function() {
+      return Materia.User.isLogged();
+    };
+
     UserObject.prototype.logout = function() {
       var defer;
       defer = $.Deferred();
@@ -1201,21 +1207,21 @@ module.exports = function(Materia) {
       }
       return defer.promise();
     },
-    confirmResetPassword: function(newPassword, key) {
-      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
+    confirmResetPassword: function(newPassword, sptoken) {
+      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key, {
         password: newPassword,
-        passwordKey: key
+        token: sptoken
       });
     },
     resetPassword: function(email, callback) {
-      return Materia.API.post('/api/usermanagement/password/reset?k=' + config.key, {
+      return Materia.API.post('/api/usermanagement/user/password/reset?k=' + config.key, {
         email: email
       });
     },
     refreshIdentity: function() {
       var defer;
       defer = $.Deferred();
-      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + cookieStore.readCookie('oio_auth')).done(function(res) {
+      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookieStore.readCookie('oio_auth')).token).done(function(res) {
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.reject(err);
@@ -1362,7 +1368,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2015-05-05T14:38Z
+ * Date: 2015-06-28T17:16Z
  */
 
 (function( global, factory ) {

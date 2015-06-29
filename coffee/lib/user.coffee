@@ -155,13 +155,13 @@ module.exports = (Materia) ->
 					defer.reject err
 			return defer.promise()
 
-		confirmResetPassword: (newPassword, key) ->
-			return Materia.API.post '/api/usermanagement/user/password?k=' + config.key + '&token=' + @token,
+		confirmResetPassword: (newPassword, sptoken) ->
+			return Materia.API.post '/api/usermanagement/user/password?k=' + config.key,
 				password: newPassword
-				passwordKey: key
+				token: sptoken
 
 		resetPassword: (email, callback) ->
-			Materia.API.post '/api/usermanagement/password/reset?k=' + config.key, email: email
+			Materia.API.post '/api/usermanagement/user/password/reset?k=' + config.key, email: email
 
 		refreshIdentity: () ->
 			defer = $.Deferred()
@@ -173,7 +173,9 @@ module.exports = (Materia) ->
 			return defer.promise()
 
 		getIdentity: () ->
-			return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')))
+			user = cookieStore.readCookie('oio_auth')
+			return null if not user
+			return new UserObject(JSON.parse(user))
 
 		isLogged: () ->
 			a = cookieStore.readCookie 'oio_auth'
