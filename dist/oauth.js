@@ -1229,7 +1229,12 @@ module.exports = function(Materia) {
       return defer.promise();
     },
     getIdentity: function() {
-      return new UserObject(JSON.parse(cookieStore.readCookie('oio_auth')));
+      var user;
+      user = cookieStore.readCookie('oio_auth');
+      if (!user) {
+        return null;
+      }
+      return new UserObject(JSON.parse(user));
     },
     isLogged: function() {
       var a;
@@ -1368,7 +1373,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2015-06-28T17:16Z
+ * Date: 2015-06-29T10:49Z
  */
 
 (function( global, factory ) {
