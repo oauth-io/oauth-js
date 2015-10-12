@@ -1,4 +1,4 @@
-(->
+( ->
 	jquery = require('./tools/jquery-lite.js')
 
 	Materia = require('./lib/core') window, document, jquery, navigator
@@ -18,7 +18,14 @@
 				return Materia.User
 			]
 
-	window.Materia = Materia
-	window.User = window.Materia.User
-	window.OAuth = window.Materia.OAuth
+	window.Materia = exports.Materia = Materia
+	window.User = exports.User = exports.Materia.User
+	window.OAuth = exports.OAuth = exports.Materia.OAuth
+
+	if (typeof define == 'function' && define.amd)
+		define -> exports
+	if (module?.exports)
+		module.exports = exports
+
+	return exports
 )()

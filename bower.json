@@ -1,9 +1,9 @@
 {
     "name": "oauth-js",
-    "version": "0.4.3",
+    "version": "0.4.4",
     "main": "dist/oauth.min.js",
     "description": "OAuth that just works",
-    "license": "apache2",
+    "license": "Apache-2.0",
     "ignore": [
         "coffee",
         "coverage",

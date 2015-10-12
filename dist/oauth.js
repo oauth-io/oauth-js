@@ -1,8 +1,8 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.oauthioJs = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.3",
+  version: "web-0.4.4",
   options: {}
 };
 
@@ -91,7 +91,7 @@ module.exports = function(window, document, jquery, navigator) {
     },
     setOAuthdURL: function(url) {
       config.oauthd_url = url;
-      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^\/]+/)[0];
     },
     getOAuthdURL: function() {
       return config.oauthd_url;
@@ -152,7 +152,7 @@ module.exports = function(Materia) {
   $ = Materia.getJquery();
   cache = Materia.getCache();
   providers_api = require('./providers')(Materia);
-  config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+  config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^\/]+/)[0];
   client_states = [];
   oauth_result = void 0;
   (parse_urlfragment = function() {
@@ -178,7 +178,7 @@ module.exports = function(Materia) {
     },
     setOAuthdURL: function(url) {
       config.oauthd_url = url;
-      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0];
+      config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^\/]+/)[0];
     },
     create: function(provider, tokens, request) {
       var i, make_res, make_res_endpoint, res;
@@ -320,7 +320,7 @@ module.exports = function(Materia) {
       }
       if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessageExternal) {
         chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
-          request.origin = sender.url.match(/^.{2,5}:\/\/[^/]+/)[0];
+          request.origin = sender.url.match(/^.{2,5}:\/\/[^\/]+/)[0];
           return getMessage(request);
         });
       }
@@ -533,7 +533,7 @@ module.exports = function(Materia) {
 },{"../config":1}],6:[function(require,module,exports){
 "use strict";
 var Q, Url,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 Url = require('../tools/url')();
 
@@ -565,31 +565,31 @@ module.exports = function(Materia, client_states, providers_api) {
       return defer.promise;
     },
     generateMethods: function(request_object, tokens, provider) {
-      var k, kk, name_array, pt, v, vv, _i, _len, _results;
+      var j, k, kk, len, name_array, pt, results, v, vv;
       if (extended_methods != null) {
-        _results = [];
-        for (k = _i = 0, _len = extended_methods.length; _i < _len; k = ++_i) {
+        results = [];
+        for (k = j = 0, len = extended_methods.length; j < len; k = ++j) {
           v = extended_methods[k];
           name_array = v.name.split('.');
           pt = request_object;
-          _results.push((function() {
-            var _j, _len1, _results1;
-            _results1 = [];
-            for (kk = _j = 0, _len1 = name_array.length; _j < _len1; kk = ++_j) {
+          results.push((function() {
+            var l, len1, results1;
+            results1 = [];
+            for (kk = l = 0, len1 = name_array.length; l < len1; kk = ++l) {
               vv = name_array[kk];
               if (kk < name_array.length - 1) {
                 if (pt[vv] == null) {
                   pt[vv] = {};
                 }
-                _results1.push(pt = pt[vv]);
+                results1.push(pt = pt[vv]);
               } else {
-                _results1.push(pt[vv] = this.mkHttpAll(provider, tokens, v, arguments));
+                results1.push(pt[vv] = this.mkHttpAll(provider, tokens, v, arguments));
               }
             }
-            return _results1;
+            return results1;
           }).apply(this, arguments));
         }
-        return _results;
+        return results;
       }
     },
     http: function(opts) {
@@ -630,7 +630,7 @@ module.exports = function(Materia, client_states, providers_api) {
             for (i in request.query) {
               qs.push(encodeURIComponent(i) + "=" + encodeURIComponent(Url.replaceParam(request.query[i], options.oauthio.tokens, request.parameters)));
             }
-            if (__indexOf.call(options.url, "?") >= 0) {
+            if (indexOf.call(options.url, "?") >= 0) {
               options.url += "&" + qs;
             } else {
               options.url += "?" + qs;
@@ -1020,10 +1020,10 @@ module.exports = function(Materia) {
     };
 
     UserObject.prototype.save = function() {
-      var d, dataToSave, keyIsInLastSave, _i, _j, _len, _len1, _ref;
+      var d, dataToSave, i, j, keyIsInLastSave, len, len1, ref;
       dataToSave = {};
-      for (_i = 0, _len = lastSave.length; _i < _len; _i++) {
-        d = lastSave[_i];
+      for (i = 0, len = lastSave.length; i < len; i++) {
+        d = lastSave[i];
         if (this.data[d.key] !== d.value) {
           dataToSave[d.key] = this.data[d.key];
         }
@@ -1032,18 +1032,18 @@ module.exports = function(Materia) {
         }
       }
       keyIsInLastSave = function(key) {
-        var o, _j, _len1;
-        for (_j = 0, _len1 = lastSave.length; _j < _len1; _j++) {
-          o = lastSave[_j];
+        var j, len1, o;
+        for (j = 0, len1 = lastSave.length; j < len1; j++) {
+          o = lastSave[j];
           if (o.key === key) {
             return true;
           }
         }
         return false;
       };
-      _ref = this.getEditableData();
-      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-        d = _ref[_j];
+      ref = this.getEditableData();
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        d = ref[j];
         if (!keyIsInLastSave(d.key)) {
           dataToSave[d.key] = this.data[d.key];
         }
@@ -1070,8 +1070,8 @@ module.exports = function(Materia) {
     };
 
     UserObject.prototype.hasProvider = function(provider) {
-      var _ref;
-      return ((_ref = this.providers) != null ? _ref.indexOf(provider) : void 0) !== -1;
+      var ref;
+      return ((ref = this.providers) != null ? ref.indexOf(provider) : void 0) !== -1;
     };
 
     UserObject.prototype.getProviders = function() {
@@ -1270,9 +1270,18 @@ module.exports = function(Materia) {
       }
     ]);
   }
-  window.Materia = Materia;
-  window.User = window.Materia.User;
-  return window.OAuth = window.Materia.OAuth;
+  window.Materia = exports.Materia = Materia;
+  window.User = exports.User = exports.Materia.User;
+  window.OAuth = exports.OAuth = exports.Materia.OAuth;
+  if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return exports;
+    });
+  }
+  if ((typeof module !== "undefined" && module !== null ? module.exports : void 0)) {
+    module.exports = exports;
+  }
+  return exports;
 })();
 
 },{"./lib/api":2,"./lib/core":3,"./lib/oauth":4,"./lib/user":7,"./tools/jquery-lite.js":11}],9:[function(require,module,exports){
@@ -1373,7 +1382,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2015-06-29T10:49Z
+ * Date: 2015-10-12T19:37Z
  */
 
 (function( global, factory ) {
@@ -5399,56 +5408,94 @@ module.exports = function(document) {
 // shim for using process in browser
 
 var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
 
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
     }
+    if (queue.length) {
+        drainQueue();
+    }
+}
 
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
             }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
+        }
+        queueIndex = -1;
+        len = queue.length;
     }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
 
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
 
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
 process.title = 'browser';
 process.browser = true;
 process.env = {};
 process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
-}
+};
 
-// TODO(shtylman)
 process.cwd = function () { return '/' };
 process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
+process.umask = function() { return 0; };
 
 },{}],16:[function(require,module,exports){
 (function (process){
@@ -5509,8 +5556,22 @@ process.chdir = function (dir) {
         }
 
     // <script>
-    } else if (typeof self !== "undefined") {
-        self.Q = definition();
+    } else if (typeof window !== "undefined" || typeof self !== "undefined") {
+        // Prefer window over self for add-on scripts. Use self for
+        // non-windowed contexts.
+        var global = typeof window !== "undefined" ? window : self;
+
+        // Get the `window` object, save the previous Q global
+        // and initialize Q as a global.
+        var previousQ = global.Q;
+        global.Q = definition();
+
+        // Add a noConflict function so Q can be removed from the
+        // global namespace.
+        global.Q.noConflict = function () {
+            global.Q = previousQ;
+            return this;
+        };
 
     } else {
         throw new Error("This environment was not anticipated by Q. Please file a bug.");
@@ -7476,6 +7537,10 @@ Promise.prototype.nodeify = function (nodeback) {
     }
 };
 
+Q.noConflict = function() {
+    throw new Error("Q.noConflict only works when Q is used as a global");
+};
+
 // All code before this point will be filtered from stack traces.
 var qEndingLine = captureLine();
 
@@ -7483,5 +7548,6 @@ return Q;
 
 });
 
-}).call(this,require("/Users/bumpmann/Desktop/projects/oauth-js-github/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/bumpmann/Desktop/projects/oauth-js-github/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":15}]},{},[8])
+}).call(this,require('_process'))
+},{"_process":15}]},{},[8])(8)
+});

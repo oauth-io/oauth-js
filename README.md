@@ -12,7 +12,7 @@ Getting the SDK
 To get the SDK, you can :
 
 - download the zip file from this repository
-- get it via Bower
+- get it via Bower or npm (for browserify)
 
 **Zip file**
 
@@ -21,8 +21,15 @@ Just copy the dist/oauth.js or dist/oauth.min.js to your project.
 **Bower**
 
 ```sh
-$ bower install oauth-js
+$ bower install oauthio-web
 ```
+
+**npm for browserify**
+
+```sh
+$ npm install oauthio-web
+```
+
 
 Integrating in your project
 ---------------------------

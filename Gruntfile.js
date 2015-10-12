@@ -49,7 +49,10 @@ module.exports = function(grunt) {
                                 sdk_version: "web-" + package_info.version
                             }
                         ]
-                    ]
+                    ],
+                    browserifyOptions: {
+                        standalone: 'oauthio-web'
+                    }
                 }
             }
         },
