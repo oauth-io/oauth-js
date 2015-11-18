@@ -231,7 +231,10 @@ module.exports = (Materia) ->
 			return defer?.promise()
 
 		clearCache: (provider) ->
-			cookies.eraseCookie "oauthio_provider_" + provider
+			if provider
+				cookies.eraseCookie "oauthio_provider_" + provider
+			else
+				cookies.eraseCookieFrom "oauthio_provider_"
 			return
 
 		http_me: (opts) ->

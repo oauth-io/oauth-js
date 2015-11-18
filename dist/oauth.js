@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.oauthioJs = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.oauthioWeb = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
@@ -450,7 +450,11 @@ module.exports = function(Materia) {
       return defer != null ? defer.promise() : void 0;
     },
     clearCache: function(provider) {
-      cookies.eraseCookie("oauthio_provider_" + provider);
+      if (provider) {
+        cookies.eraseCookie("oauthio_provider_" + provider);
+      } else {
+        cookies.eraseCookieFrom("oauthio_provider_");
+      }
     },
     http_me: function(opts) {
       if (oauthio.request.http_me) {
@@ -1367,6 +1371,17 @@ module.exports = {
     date = new Date();
     date.setTime(date.getTime() - 86400000);
     this.document.cookie = name + "=; expires=" + date.toGMTString() + "; path=/";
+  },
+  eraseCookieFrom: function(prefix) {
+    var cname, cookie, cookies, j, len;
+    cookies = this.document.cookie.split(";");
+    for (j = 0, len = cookies.length; j < len; j++) {
+      cookie = cookies[j];
+      cname = cookie.split("=")[0].trim();
+      if (cname.substr(0, prefix.length) === prefix) {
+        this.eraseCookie(cname);
+      }
+    }
   }
 };
 

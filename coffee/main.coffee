@@ -1,4 +1,4 @@
-( ->
+do ->
 	jquery = require('./tools/jquery-lite.js')
 
 	Materia = require('./lib/core') window, document, jquery, navigator
@@ -28,4 +28,3 @@
 		module.exports = exports
 
 	return exports
-)()

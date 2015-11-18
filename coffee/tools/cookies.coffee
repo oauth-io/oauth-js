@@ -30,3 +30,11 @@ module.exports =
 		date.setTime date.getTime() - 86400000
 		@document.cookie = name + "=; expires=" + date.toGMTString() + "; path=/"
 		return
+
+	eraseCookieFrom: (prefix) ->
+		cookies = @document.cookie.split(";")
+		for cookie in cookies
+			cname = cookie.split("=")[0].trim()
+			if cname.substr(0, prefix.length) == prefix
+				@eraseCookie(cname)
+		return
