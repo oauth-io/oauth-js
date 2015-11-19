@@ -7,6 +7,18 @@ module.exports = (Materia) ->
 
 	lastSave = null
 
+	oauthResToObject = (res) ->
+		a = {}
+		a.access_token = res.access_token if res.access_token?
+		a.oauth_token = res.oauth_token if res.oauth_token?
+		a.oauth_token_secret = res.oauth_token_secret if res.oauth_token_secret?
+		a.expires_in = res.expires_in if res.expires_in?
+		a.token_type = res.token_type if res.token_type?
+		a.id_token = res.id_token if res.id_token?
+		a.provider = res.provider if res.provider?
+		a.email = res.email if res.email?
+		return a
+
 	class UserObject
 		constructor: (data) ->
 			@token = data.token
@@ -67,7 +79,7 @@ module.exports = (Materia) ->
 
 		addProvider: (oauthRes) ->
 			defer = $.Deferred()
-			oauthRes = oauthRes.toJson() if typeof oauthRes.toJson == 'function'
+			oauthRes = oauthResToObject(oauthRes)
 			oauthRes.email = @data.email
 			@providers.push oauthRes.provider
 			Materia.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
@@ -121,7 +133,7 @@ module.exports = (Materia) ->
 		setOAuthdURL: (url) -> return Materia.setOAuthdURL url
 		signup: (data) ->
 			defer = $.Deferred()
-			data = data.toJson() if typeof data.toJson == 'function'
+			data = oauthResToObject(data)
 			Materia.API.post '/api/usermanagement/signup?k=' + config.key, data
 				.done (res) ->
 					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
@@ -136,7 +148,7 @@ module.exports = (Materia) ->
 			if typeof email != "string" and not password
 				# signin(OAuthRes)
 				signinData = email
-				signinData = signinData.toJson() if typeof signinData.toJson == 'function'
+				signinData = oauthResToObject(signinData)
 				Materia.API.post '/api/usermanagement/signin?k=' + config.key, signinData
 					.done (res) ->
 						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
