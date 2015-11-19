@@ -52,6 +52,19 @@ module.exports = (Materia) ->
 			res = {}
 			for i of tokens
 				res[i] = tokens[i]
+
+			res.toJson = ->
+				a = {}
+				a.access_token = res.access_token if res.access_token?
+				a.oauth_token = res.oauth_token if res.oauth_token?
+				a.oauth_token_secret = res.oauth_token_secret if res.oauth_token_secret?
+				a.expires_in = res.expires_in if res.expires_in?
+				a.token_type = res.token_type if res.token_type?
+				a.id_token = res.id_token if res.id_token?
+				a.provider = res.provider if res.provider?
+				a.email = res.email if res.email?
+				return a
+
 			res.get = make_res("GET")
 			res.post = make_res("POST")
 			res.put = make_res("PUT")

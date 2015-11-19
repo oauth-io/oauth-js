@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.4",
+  version: "web-0.4.5",
   options: {}
 };
 
@@ -198,6 +198,35 @@ module.exports = function(Materia) {
       for (i in tokens) {
         res[i] = tokens[i];
       }
+      res.toJson = function() {
+        var a;
+        a = {};
+        if (res.access_token != null) {
+          a.access_token = res.access_token;
+        }
+        if (res.oauth_token != null) {
+          a.oauth_token = res.oauth_token;
+        }
+        if (res.oauth_token_secret != null) {
+          a.oauth_token_secret = res.oauth_token_secret;
+        }
+        if (res.expires_in != null) {
+          a.expires_in = res.expires_in;
+        }
+        if (res.token_type != null) {
+          a.token_type = res.token_type;
+        }
+        if (res.id_token != null) {
+          a.id_token = res.id_token;
+        }
+        if (res.provider != null) {
+          a.provider = res.provider;
+        }
+        if (res.email != null) {
+          a.email = res.email;
+        }
+        return a;
+      };
       res.get = make_res("GET");
       res.post = make_res("POST");
       res.put = make_res("PUT");
