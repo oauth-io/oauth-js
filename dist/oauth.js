@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.5",
+  version: "web-0.4.6",
   options: {}
 };
 
@@ -405,10 +405,13 @@ module.exports = function(Materia) {
         url = opts;
         opts = {};
       }
+      if (typeof url !== 'string') {
+        throw new Error('You must specify an url');
+      }
       if (cache.cacheEnabled(opts.cache)) {
         res = cache.tryCache(oauth, provider, opts.cache);
         if (res) {
-          url = Url.getAbsUrl(url) + (url.indexOf("#") === -1 ? "#" : "&") + "oauthio=cache";
+          url = Url.getAbsUrl(url) + (url.indexOf("#") === -1 ? "#" : "&") + "oauthio=cache:" + provider;
           location_operations.changeHref(url);
           location_operations.reload();
           return;
@@ -427,8 +430,31 @@ module.exports = function(Materia) {
       }
       location_operations.changeHref(url);
     },
+    isRedirect: function(provider) {
+      var cache_provider, data, e;
+      if (oauth_result == null) {
+        return false;
+      }
+      if ((oauth_result != null ? oauth_result.substr(0, 6) : void 0) === "cache:") {
+        cache_provider = oauth_result != null ? oauth_result.substr(6) : void 0;
+        if (!provider) {
+          return cache_provider;
+        }
+        return cache_provider.toLowerCase() === provider.toLowerCase();
+      }
+      try {
+        data = JSON.parse(oauth_result);
+      } catch (_error) {
+        e = _error;
+        return false;
+      }
+      if (provider) {
+        return data.provider.toLowerCase() === provider.toLowerCase();
+      }
+      return data.provider;
+    },
     callback: function(provider, opts, callback) {
-      var defer, res;
+      var defer, err, res;
       defer = $.Deferred();
       if (arguments.length === 1 && typeof provider === "function") {
         callback = provider;
@@ -442,18 +468,11 @@ module.exports = function(Materia) {
         callback = opts;
         opts = {};
       }
-      if (cache.cacheEnabled(opts.cache) || oauth_result === "cache") {
-        res = cache.tryCache(oauth, provider, opts.cache);
-        if (oauth_result === "cache" && (typeof provider !== "string" || !provider)) {
-          if (defer != null) {
-            defer.reject(new Error("You must set a provider when using the cache"));
-          }
-          if (callback) {
-            return callback(new Error("You must set a provider when using the cache"));
-          } else {
-            return defer != null ? defer.promise() : void 0;
-          }
+      if (cache.cacheEnabled(opts != null ? opts.cache : void 0) || (oauth_result != null ? oauth_result.substr(0, 6) : void 0) === "cache:") {
+        if (!provider && (oauth_result != null ? oauth_result.substr(0, 6) : void 0) === "cache:") {
+          provider = oauth_result.substr(6);
         }
+        res = cache.tryCache(oauth, provider, true);
         if (res) {
           if (callback) {
             if (res) {
@@ -465,6 +484,16 @@ module.exports = function(Materia) {
             }
             return defer != null ? defer.promise() : void 0;
           }
+        } else if ((oauth_result != null ? oauth_result.substr(0, 6) : void 0) === "cache:") {
+          err = new Error('Could not fetch data from cache');
+          if (callback) {
+            return callback(err);
+          } else {
+            if (defer != null) {
+              defer.reject(err);
+            }
+            return defer != null ? defer.promise() : void 0;
+          }
         }
       }
       if (!oauth_result) {
@@ -473,7 +502,7 @@ module.exports = function(Materia) {
       oauthio.request.sendCallback({
         data: oauth_result,
         provider: provider,
-        cache: opts.cache,
+        cache: opts != null ? opts.cache : void 0,
         callback: callback
       }, defer);
       return defer != null ? defer.promise() : void 0;

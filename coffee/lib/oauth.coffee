@@ -191,10 +191,13 @@ module.exports = (Materia) ->
 			if arguments.length is 2
 				url = opts
 				opts = {}
+			if typeof url != 'string'
+				throw new Error 'You must specify an url'
+
 			if cache.cacheEnabled(opts.cache)
 				res = cache.tryCache(oauth, provider, opts.cache)
 				if res
-					url = Url.getAbsUrl(url) + ((if (url.indexOf("#") is -1) then "#" else "&")) + "oauthio=cache"
+					url = Url.getAbsUrl(url) + ((if (url.indexOf("#") is -1) then "#" else "&")) + "oauthio=cache:" + provider
 					location_operations.changeHref url
 					location_operations.reload()
 					return
@@ -209,6 +212,25 @@ module.exports = (Materia) ->
 			location_operations.changeHref url
 			return
 
+		isRedirect: (provider) ->
+			if ! oauth_result?
+				return false
+
+			if oauth_result?.substr(0,6) is "cache:"
+				cache_provider = oauth_result?.substr(6)
+				if ! provider
+					return cache_provider
+				return cache_provider.toLowerCase() == provider.toLowerCase()
+
+			try
+				data = JSON.parse(oauth_result)
+			catch e
+				return false
+			
+			if provider
+				return data.provider.toLowerCase() is provider.toLowerCase()
+			return data.provider
+
 		callback: (provider, opts, callback) ->
 			defer = $.Deferred()
 			if arguments.length is 1 and typeof provider == "function"
@@ -220,25 +242,28 @@ module.exports = (Materia) ->
 			if arguments.length is 2 and typeof opts == "function"
 				callback = opts
 				opts = {}
-			if cache.cacheEnabled(opts.cache) or oauth_result is "cache"
-				res = cache.tryCache(oauth, provider, opts.cache)
-				if oauth_result is "cache" and (typeof provider isnt "string" or not provider)
-					defer?.reject new Error("You must set a provider when using the cache")
-					if callback
-						return callback(new Error("You must set a provider when using the cache"))
-					else
-						return defer?.promise()
+			if cache.cacheEnabled(opts?.cache) or oauth_result?.substr(0,6) is "cache:"
+				if ! provider && oauth_result?.substr(0,6) is "cache:"
+					provider = oauth_result.substr(6)
+				res = cache.tryCache(oauth, provider, true)
 				if res
 					if callback
 						return callback(null, res)  if res
 					else
 						defer?.resolve res
 						return defer?.promise()
+				else if oauth_result?.substr(0,6) is "cache:"
+					err = new Error 'Could not fetch data from cache'
+					if callback
+						return callback(err)
+					else
+						defer?.reject err
+						return defer?.promise()
 			return  unless oauth_result
 			oauthio.request.sendCallback {
 				data: oauth_result
 				provider: provider
-				cache: opts.cache
+				cache: opts?.cache
 				callback: callback }, defer
 
 			return defer?.promise()
