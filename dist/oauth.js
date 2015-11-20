@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.6",
+  version: "web-0.4.7",
   options: {}
 };
 
@@ -1382,7 +1382,17 @@ module.exports = {
     return false;
   },
   storeCache: function(provider, cache) {
-    this.cookies.createCookie("oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), cache.expires_in - 10 || 3600);
+    var expires;
+    expires = 3600;
+    if (cache.expires_in && this.config.options.expires && this.config.options.expires < cache.expires_in - 10) {
+      expires = this.config.options.expires;
+    } else if (cache.expires_in) {
+      expires = cache.expires_in;
+    }
+    if (!cache.expires_in && this.config.options.expires === false) {
+      expires = false;
+    }
+    this.cookies.createCookie("oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires);
   },
   cacheEnabled: function(cache) {
     if (typeof cache === "undefined") {
@@ -1403,7 +1413,11 @@ module.exports = {
     var date;
     this.eraseCookie(name);
     date = new Date();
-    date.setTime(date.getTime() + (expires || 1200) * 1000);
+    if (expires) {
+      date.setTime(date.getTime() + (expires || 1200) * 1000);
+    } else {
+      date.setFullYear(date.getFullYear() + 3);
+    }
     expires = "; expires=" + date.toGMTString();
     this.document.cookie = name + "=" + value + expires + "; path=/";
   },

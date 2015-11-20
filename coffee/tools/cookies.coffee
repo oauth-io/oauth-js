@@ -8,7 +8,10 @@ module.exports =
 	createCookie: (name, value, expires) ->
 			@eraseCookie name
 			date = new Date()
-			date.setTime date.getTime() + (expires or 1200) * 1000 # def: 20 mins
+			if expires
+				date.setTime date.getTime() + (expires or 1200) * 1000 # def: 20 mins
+			else
+				date.setFullYear date.getFullYear() + 3
 			expires = "; expires=" + date.toGMTString()
 			@document.cookie = name + "=" + value + expires + "; path=/"
 			return

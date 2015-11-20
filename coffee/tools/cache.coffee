@@ -21,7 +21,15 @@ module.exports =
 			false
 
 	storeCache: (provider, cache) ->
-		@cookies.createCookie "oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), cache.expires_in - 10 or 3600
+		expires = 3600
+		if cache.expires_in && @config.options.expires && @config.options.expires < cache.expires_in - 10
+			expires = @config.options.expires
+		else if cache.expires_in
+			expires = cache.expires_in
+		if ! cache.expires_in && @config.options.expires == false
+			expires = false
+
+		@cookies.createCookie "oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires
 		return
 
 	cacheEnabled: (cache) ->
