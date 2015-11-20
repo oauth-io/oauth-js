@@ -264,6 +264,7 @@ module.exports = (Materia) ->
 				data: oauth_result
 				provider: provider
 				cache: opts?.cache
+				expires: opts?.expires
 				callback: callback }, defer
 
 			return defer?.promise()

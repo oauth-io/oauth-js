@@ -279,7 +279,10 @@ module.exports = (Materia, client_states, providers_api) ->
 		data.data.provider = data.provider  unless opts.provider
 		res = data.data
 		res.provider = data.provider.toLowerCase()
-		cache.storeCache data.provider, res  if cache.cacheEnabled(opts.cache) and res
+		if cache.cacheEnabled(opts.cache) and res
+			if opts.expires && ! res.expires_in
+				res.expires_in = opts.expires
+			cache.storeCache data.provider, res
 		request = res.request
 		delete res.request
 

@@ -503,6 +503,7 @@ module.exports = function(Materia) {
         data: oauth_result,
         provider: provider,
         cache: opts != null ? opts.cache : void 0,
+        expires: opts != null ? opts.expires : void 0,
         callback: callback
       }, defer);
       return defer != null ? defer.promise() : void 0;
@@ -960,6 +961,9 @@ module.exports = function(Materia, client_states, providers_api) {
       res = data.data;
       res.provider = data.provider.toLowerCase();
       if (cache.cacheEnabled(opts.cache) && res) {
+        if (opts.expires && !res.expires_in) {
+          res.expires_in = opts.expires;
+        }
         cache.storeCache(data.provider, res);
       }
       request = res.request;
@@ -1384,13 +1388,10 @@ module.exports = {
   storeCache: function(provider, cache) {
     var expires;
     expires = 3600;
-    if (cache.expires_in && this.config.options.expires && this.config.options.expires < cache.expires_in - 10) {
-      expires = this.config.options.expires;
-    } else if (cache.expires_in) {
+    if (cache.expires_in) {
       expires = cache.expires_in;
-    }
-    if (!cache.expires_in && this.config.options.expires === false) {
-      expires = false;
+    } else if (this.config.options.expires || this.config.options.expires === false) {
+      expires = this.config.options.expires;
     }
     this.cookies.createCookie("oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires);
   },

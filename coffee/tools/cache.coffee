@@ -22,12 +22,10 @@ module.exports =
 
 	storeCache: (provider, cache) ->
 		expires = 3600
-		if cache.expires_in && @config.options.expires && @config.options.expires < cache.expires_in - 10
-			expires = @config.options.expires
-		else if cache.expires_in
+		if cache.expires_in
 			expires = cache.expires_in
-		if ! cache.expires_in && @config.options.expires == false
-			expires = false
+		else if @config.options.expires || @config.options.expires == false
+			expires = @config.options.expires
 
 		@cookies.createCookie "oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires
 		return
