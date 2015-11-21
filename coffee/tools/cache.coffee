@@ -1,12 +1,12 @@
 "use strict"
 
 module.exports =
-	init: (cookies_module, config) ->
+	init: (cookies, lstorage, config) ->
 		@config = config
-		@cookies = cookies_module
+		@storage = lstorage.active() && lstorage || cookies
 	tryCache: (OAuth, provider, cache) ->
 			if @cacheEnabled(cache)
-				cache = @cookies.readCookie("oauthio_provider_" + provider)
+				cache = @storage.read("oauthio_provider_" + provider)
 				return false  unless cache
 				cache = decodeURIComponent(cache)
 			if typeof cache is "string"
@@ -27,9 +27,17 @@ module.exports =
 		else if @config.options.expires || @config.options.expires == false
 			expires = @config.options.expires
 
-		@cookies.createCookie "oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires
+		@storage.create "oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires
 		return
 
 	cacheEnabled: (cache) ->
 		return @config.options.cache  if typeof cache is "undefined"
 		cache
+	
+	clearCache: (provider) ->
+		if provider
+			@storage.erase "oauthio_provider_" + provider
+		else
+			@storage.eraseFrom "oauthio_provider_"
+		return
+		

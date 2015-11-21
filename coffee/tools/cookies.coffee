@@ -5,8 +5,8 @@ module.exports =
 		@config = config
 		@document = document
 
-	createCookie: (name, value, expires) ->
-			@eraseCookie name
+	create: (name, value, expires) ->
+			@erase name
 			date = new Date()
 			if expires
 				date.setTime date.getTime() + (expires or 1200) * 1000 # def: 20 mins
@@ -16,7 +16,7 @@ module.exports =
 			@document.cookie = name + "=" + value + expires + "; path=/"
 			return
 
-	readCookie: (name) ->
+	read: (name) ->
 		nameEQ = name + "="
 		ca = @document.cookie.split(";")
 		i = 0
@@ -28,16 +28,16 @@ module.exports =
 			i++
 		null
 
-	eraseCookie: (name) ->
+	erase: (name) ->
 		date = new Date()
 		date.setTime date.getTime() - 86400000
 		@document.cookie = name + "=; expires=" + date.toGMTString() + "; path=/"
 		return
 
-	eraseCookieFrom: (prefix) ->
+	eraseFrom: (prefix) ->
 		cookies = @document.cookie.split(";")
 		for cookie in cookies
 			cname = cookie.split("=")[0].trim()
 			if cname.substr(0, prefix.length) == prefix
-				@eraseCookie(cname)
+				@erase(cname)
 		return

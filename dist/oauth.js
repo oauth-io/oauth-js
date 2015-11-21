@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.4.8",
+  version: "web-0.5.0",
   options: {}
 };
 
@@ -61,7 +61,7 @@ module.exports = function(Materia) {
 
 },{}],3:[function(require,module,exports){
 "use strict";
-var Location, Url, cache, config, cookies;
+var Location, Url, cache, config, cookies, lstorage;
 
 config = require('../config');
 
@@ -71,6 +71,8 @@ Location = require('../tools/location_operations');
 
 cookies = require("../tools/cookies");
 
+lstorage = require("../tools/lstorage");
+
 cache = require("../tools/cache");
 
 module.exports = function(window, document, jquery, navigator) {
@@ -78,7 +80,7 @@ module.exports = function(window, document, jquery, navigator) {
   Url = Url(document);
   cookies.init(config, document);
   location_operations = Location(document);
-  cache.init(cookies, config);
+  cache.init(cookies, lstorage, config);
   Materia = {
     initialize: function(public_key, options) {
       var i;
@@ -133,7 +135,7 @@ module.exports = function(window, document, jquery, navigator) {
   return Materia;
 };
 
-},{"../config":1,"../tools/cache":9,"../tools/cookies":10,"../tools/location_operations":12,"../tools/url":14}],4:[function(require,module,exports){
+},{"../config":1,"../tools/cache":9,"../tools/cookies":10,"../tools/location_operations":12,"../tools/lstorage":13,"../tools/url":15}],4:[function(require,module,exports){
 "use strict";
 var cookies, oauthio_requests, sha1;
 
@@ -161,10 +163,10 @@ module.exports = function(Materia) {
     if (results) {
       document.location.hash = document.location.hash.replace(/&?oauthio=[^&]*/, "");
       oauth_result = decodeURIComponent(results[1].replace(/\+/g, " "));
-      cookie_state = cookies.readCookie("oauthio_state");
+      cookie_state = cookies.read("oauthio_state");
       if (cookie_state) {
         client_states.push(cookie_state);
-        cookies.eraseCookie("oauthio_state");
+        cookies.erase("oauthio_state");
       }
     }
   })();
@@ -421,7 +423,7 @@ module.exports = function(Materia) {
         opts.state = sha1.create_hash();
         opts.state_type = "client";
       }
-      cookies.createCookie("oauthio_state", opts.state);
+      cookies.create("oauthio_state", opts.state);
       redirect_uri = encodeURIComponent(Url.getAbsUrl(url));
       url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key;
       url += "&redirect_uri=" + redirect_uri;
@@ -509,11 +511,7 @@ module.exports = function(Materia) {
       return defer != null ? defer.promise() : void 0;
     },
     clearCache: function(provider) {
-      if (provider) {
-        cookies.eraseCookie("oauthio_provider_" + provider);
-      } else {
-        cookies.eraseCookieFrom("oauthio_provider_");
-      }
+      return cache.clearCache(provider);
     },
     http_me: function(opts) {
       if (oauthio.request.http_me) {
@@ -532,7 +530,7 @@ module.exports = function(Materia) {
   return oauth;
 };
 
-},{"../tools/cookies":10,"../tools/sha1":13,"./providers":5,"./request":6}],5:[function(require,module,exports){
+},{"../tools/cookies":10,"../tools/sha1":14,"./providers":5,"./request":6}],5:[function(require,module,exports){
 "use strict";
 var config;
 
@@ -1055,13 +1053,13 @@ module.exports = function(Materia, client_states, providers_api) {
   };
 };
 
-},{"../tools/url":14,"q":16}],7:[function(require,module,exports){
+},{"../tools/url":15,"q":17}],7:[function(require,module,exports){
 "use strict";
 module.exports = function(Materia) {
-  var $, UserObject, config, cookieStore, lastSave;
+  var $, UserObject, config, cookies, lastSave;
   $ = Materia.getJquery();
   config = Materia.getConfig();
-  cookieStore = Materia.getCookies();
+  cookies = Materia.getCookies();
   lastSave = null;
   UserObject = (function() {
     function UserObject(data) {
@@ -1131,8 +1129,8 @@ module.exports = function(Materia) {
         user: this.data,
         providers: this.providers
       };
-      cookieStore.eraseCookie('oio_auth');
-      return cookieStore.createCookie('oio_auth', JSON.stringify(copy), 21600);
+      cookies.erase('oio_auth');
+      return cookies.create('oio_auth', JSON.stringify(copy), 21600);
     };
 
     UserObject.prototype.hasProvider = function(provider) {
@@ -1213,7 +1211,7 @@ module.exports = function(Materia) {
     UserObject.prototype.logout = function() {
       var defer;
       defer = $.Deferred();
-      cookieStore.eraseCookie('oio_auth');
+      cookies.erase('oio_auth');
       Materia.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
         return defer.resolve();
       }).fail(function(err) {
@@ -1239,7 +1237,7 @@ module.exports = function(Materia) {
         data = data.toJson();
       }
       Materia.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
-        cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
+        cookies.create('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.reject(err);
@@ -1255,7 +1253,7 @@ module.exports = function(Materia) {
           signinData = signinData.toJson();
         }
         Materia.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
-          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
+          cookies.create('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.reject(err);
@@ -1265,7 +1263,7 @@ module.exports = function(Materia) {
           email: email,
           password: password
         }).done(function(res) {
-          cookieStore.createCookie('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
+          cookies.create('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.reject(err);
@@ -1287,7 +1285,7 @@ module.exports = function(Materia) {
     refreshIdentity: function() {
       var defer;
       defer = $.Deferred();
-      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookieStore.readCookie('oio_auth')).token).done(function(res) {
+      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookies.read('oio_auth')).token).done(function(res) {
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.reject(err);
@@ -1296,7 +1294,7 @@ module.exports = function(Materia) {
     },
     getIdentity: function() {
       var user;
-      user = cookieStore.readCookie('oio_auth');
+      user = cookies.read('oio_auth');
       if (!user) {
         return null;
       }
@@ -1304,7 +1302,7 @@ module.exports = function(Materia) {
     },
     isLogged: function() {
       var a;
-      a = cookieStore.readCookie('oio_auth');
+      a = cookies.read('oio_auth');
       if (a) {
         return true;
       }
@@ -1353,14 +1351,14 @@ module.exports = function(Materia) {
 },{"./lib/api":2,"./lib/core":3,"./lib/oauth":4,"./lib/user":7,"./tools/jquery-lite.js":11}],9:[function(require,module,exports){
 "use strict";
 module.exports = {
-  init: function(cookies_module, config) {
+  init: function(cookies, lstorage, config) {
     this.config = config;
-    return this.cookies = cookies_module;
+    return this.storage = lstorage.active() && lstorage || cookies;
   },
   tryCache: function(OAuth, provider, cache) {
     var e, i, res;
     if (this.cacheEnabled(cache)) {
-      cache = this.cookies.readCookie("oauthio_provider_" + provider);
+      cache = this.storage.read("oauthio_provider_" + provider);
       if (!cache) {
         return false;
       }
@@ -1393,13 +1391,20 @@ module.exports = {
     } else if (this.config.options.expires || this.config.options.expires === false) {
       expires = this.config.options.expires;
     }
-    this.cookies.createCookie("oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires);
+    this.storage.create("oauthio_provider_" + provider, encodeURIComponent(JSON.stringify(cache)), expires);
   },
   cacheEnabled: function(cache) {
     if (typeof cache === "undefined") {
       return this.config.options.cache;
     }
     return cache;
+  },
+  clearCache: function(provider) {
+    if (provider) {
+      this.storage.erase("oauthio_provider_" + provider);
+    } else {
+      this.storage.eraseFrom("oauthio_provider_");
+    }
   }
 };
 
@@ -1410,9 +1415,9 @@ module.exports = {
     this.config = config;
     return this.document = document;
   },
-  createCookie: function(name, value, expires) {
+  create: function(name, value, expires) {
     var date;
-    this.eraseCookie(name);
+    this.erase(name);
     date = new Date();
     if (expires) {
       date.setTime(date.getTime() + (expires || 1200) * 1000);
@@ -1422,7 +1427,7 @@ module.exports = {
     expires = "; expires=" + date.toGMTString();
     this.document.cookie = name + "=" + value + expires + "; path=/";
   },
-  readCookie: function(name) {
+  read: function(name) {
     var c, ca, i, nameEQ;
     nameEQ = name + "=";
     ca = this.document.cookie.split(";");
@@ -1439,20 +1444,20 @@ module.exports = {
     }
     return null;
   },
-  eraseCookie: function(name) {
+  erase: function(name) {
     var date;
     date = new Date();
     date.setTime(date.getTime() - 86400000);
     this.document.cookie = name + "=; expires=" + date.toGMTString() + "; path=/";
   },
-  eraseCookieFrom: function(prefix) {
+  eraseFrom: function(prefix) {
     var cname, cookie, cookies, j, len;
     cookies = this.document.cookie.split(";");
     for (j = 0, len = cookies.length; j < len; j++) {
       cookie = cookies[j];
       cname = cookie.split("=")[0].trim();
       if (cname.substr(0, prefix.length) === prefix) {
-        this.eraseCookie(cname);
+        this.erase(cname);
       }
     }
   }
@@ -1470,7 +1475,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-09-24T13:40Z
+ * Date: 2015-10-12T19:37Z
  */
 
 (function( global, factory ) {
@@ -5164,6 +5169,83 @@ module.exports = function(document) {
 };
 
 },{}],13:[function(require,module,exports){
+"use strict";
+var useCache;
+
+useCache = function(callback) {
+  var cacheobj;
+  cacheobj = localStorage.getItem('oauthio_cache');
+  if (cacheobj) {
+    cacheobj = JSON.parse(cacheobj);
+  } else {
+    cacheobj = {};
+  }
+  return callback(cacheobj, function() {
+    return localStorage.setItem('oauthio_cache', JSON.stringify(cacheobj));
+  });
+};
+
+module.exports = {
+  init: function(config, document) {
+    this.config = config;
+    return this.document = document;
+  },
+  active: function() {
+    return typeof localStorage !== "undefined" && localStorage !== null;
+  },
+  create: function(name, value, expires) {
+    var date;
+    this.erase(name);
+    date = new Date();
+    localStorage.setItem(name, value);
+    useCache(function(cacheobj, cacheupdate) {
+      cacheobj[name] = expires != null ? expires : date.getTime() + (expires || 1200) * {
+        1000: false
+      };
+      return cacheupdate();
+    });
+  },
+  read: function(name) {
+    return useCache(function(cacheobj, cacheupdate) {
+      if (cacheobj[name] == null) {
+        return null;
+      }
+      if (cacheobj[name] === false) {
+        return localStorage.getItem(name);
+      } else if ((new Date()).getTime() < cacheobj[name]) {
+        localStorage.removeItem(name);
+        delete cacheobj[name];
+        cacheupdate();
+        return null;
+      } else {
+        return localStorage.getItem(name);
+      }
+    });
+  },
+  erase: function(name) {
+    return useCache(function(cacheobj, cacheupdate) {
+      localStorage.removeItem(name);
+      delete cacheobj[name];
+      return cacheupdate();
+    });
+  },
+  eraseFrom: function(prefix) {
+    useCache(function(cacheobj, cacheupdate) {
+      var cachenames, i, len, name;
+      cachenames = Object.keys(cacheobj);
+      for (i = 0, len = cachenames.length; i < len; i++) {
+        name = cachenames[i];
+        if (name.substr(0, prefix.length) === prefix) {
+          localStorage.removeItem(name);
+          delete cacheobj[name];
+        }
+      }
+      return cacheupdate();
+    });
+  }
+};
+
+},{}],14:[function(require,module,exports){
 var b64pad, hexcase;
 
 hexcase = 0;
@@ -5461,7 +5543,7 @@ module.exports = {
   }
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = function(document) {
   return {
     getAbsUrl: function(url) {
@@ -5492,7 +5574,7 @@ module.exports = function(document) {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -5585,7 +5667,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -7637,5 +7719,5 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":15}]},{},[8])(8)
+},{"_process":16}]},{},[8])(8)
 });

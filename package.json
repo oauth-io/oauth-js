@@ -1,6 +1,6 @@
 {
   "name": "oauthio-web",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "description": "OAuth that just works",
   "main": "dist/oauth.min.js",
   "repository": {

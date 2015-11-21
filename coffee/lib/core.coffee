@@ -4,6 +4,7 @@ config = require('../config')
 Url = require("../tools/url")
 Location = require('../tools/location_operations')
 cookies = require("../tools/cookies")
+lstorage = require("../tools/lstorage")
 cache = require("../tools/cache")
 
 module.exports = (window, document, jquery, navigator) ->
@@ -11,7 +12,7 @@ module.exports = (window, document, jquery, navigator) ->
 	cookies.init config, document
 	location_operations = Location document
 
-	cache.init cookies, config
+	cache.init cookies, lstorage, config
 
 	Materia =
 		initialize: (public_key, options) ->

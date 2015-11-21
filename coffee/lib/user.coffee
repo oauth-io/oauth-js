@@ -3,7 +3,7 @@
 module.exports = (Materia) ->
 	$ = Materia.getJquery()
 	config = Materia.getConfig()
-	cookieStore = Materia.getCookies()
+	cookies = Materia.getCookies()
 
 	lastSave = null
 
@@ -48,8 +48,8 @@ module.exports = (Materia) ->
 
 		saveLocal: () ->
 			copy = token: @token, user: @data, providers: @providers
-			cookieStore.eraseCookie 'oio_auth'
-			cookieStore.createCookie 'oio_auth', JSON.stringify(copy), 21600
+			cookies.erase 'oio_auth'
+			cookies.create 'oio_auth', JSON.stringify(copy), 21600
 
 		hasProvider: (provider) ->
 			return @providers?.indexOf(provider) != -1
@@ -108,7 +108,7 @@ module.exports = (Materia) ->
 
 		logout: () ->
 			defer = $.Deferred()
-			cookieStore.eraseCookie 'oio_auth'
+			cookies.erase 'oio_auth'
 			Materia.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + @token)
 				.done ->
 					defer.resolve()
@@ -124,7 +124,7 @@ module.exports = (Materia) ->
 			data = data.toJson() if typeof data.toJson == 'function'
 			Materia.API.post '/api/usermanagement/signup?k=' + config.key, data
 				.done (res) ->
-					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
+					cookies.create 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->
 					defer.reject err
@@ -139,7 +139,7 @@ module.exports = (Materia) ->
 				signinData = signinData.toJson() if typeof signinData.toJson == 'function'
 				Materia.API.post '/api/usermanagement/signin?k=' + config.key, signinData
 					.done (res) ->
-						cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
+						cookies.create 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 						defer.resolve new UserObject(res.data)
 					.fail (err) ->
 						defer.reject err
@@ -149,7 +149,7 @@ module.exports = (Materia) ->
 					email: email
 					password: password
 				).done((res) ->
-					cookieStore.createCookie 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
+					cookies.create 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
 				).fail (err) ->
 					defer.reject err
@@ -165,7 +165,7 @@ module.exports = (Materia) ->
 
 		refreshIdentity: () ->
 			defer = $.Deferred()
-			Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookieStore.readCookie('oio_auth')).token)
+			Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(cookies.read('oio_auth')).token)
 				.done (res) ->
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->
@@ -173,12 +173,12 @@ module.exports = (Materia) ->
 			return defer.promise()
 
 		getIdentity: () ->
-			user = cookieStore.readCookie('oio_auth')
+			user = cookies.read 'oio_auth'
 			return null if not user
 			return new UserObject(JSON.parse(user))
 
 		isLogged: () ->
-			a = cookieStore.readCookie 'oio_auth'
+			a = cookies.read 'oio_auth'
 			return true if a
 			return false
 	}

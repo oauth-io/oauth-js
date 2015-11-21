@@ -24,10 +24,10 @@ module.exports = (Materia) ->
 		if results
 			document.location.hash = document.location.hash.replace(/&?oauthio=[^&]*/, "")
 			oauth_result = decodeURIComponent(results[1].replace(/\+/g, " "))
-			cookie_state = cookies.readCookie("oauthio_state")
+			cookie_state = cookies.read("oauthio_state")
 			if cookie_state
 				client_states.push cookie_state
-				cookies.eraseCookie "oauthio_state"
+				cookies.erase "oauthio_state"
 		return
 	)()
 
@@ -204,7 +204,7 @@ module.exports = (Materia) ->
 			unless opts.state
 				opts.state = sha1.create_hash()
 				opts.state_type = "client"
-			cookies.createCookie "oauthio_state", opts.state
+			cookies.create "oauthio_state", opts.state
 			redirect_uri = encodeURIComponent(Url.getAbsUrl(url))
 			url = config.oauthd_url + "/auth/" + provider + "?k=" + config.key
 			url += "&redirect_uri=" + redirect_uri
@@ -270,11 +270,7 @@ module.exports = (Materia) ->
 			return defer?.promise()
 
 		clearCache: (provider) ->
-			if provider
-				cookies.eraseCookie "oauthio_provider_" + provider
-			else
-				cookies.eraseCookieFrom "oauthio_provider_"
-			return
+			cache.clearCache provider
 
 		http_me: (opts) ->
 			oauthio.request.http_me opts  if oauthio.request.http_me
