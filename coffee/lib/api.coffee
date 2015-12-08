@@ -2,29 +2,22 @@
 
 module.exports = (Materia) ->
 	$ = Materia.getJquery()
+	apiCall = (type, url, params) =>
+		defer = $.Deferred()
+		base = Materia.getOAuthdURL()
+		$.ajax(
+			url: base + url
+			type: type
+			data: params
+		).then(
+			((data) => defer.resolve data),
+			((err) => defer.reject err && err.responseJSON)
+		)
+		return defer.promise()
+	
 	return {
-		get: (url, params) =>
-			base = Materia.getOAuthdURL()
-			$.ajax
-				url: base + url
-				type: 'get'
-				data: params
-		post: (url, params) =>
-			base = Materia.getOAuthdURL()
-			$.ajax
-				url: base + url
-				type: 'post'
-				data: params
-		put: (url, params) =>
-			base = Materia.getOAuthdURL()
-			$.ajax
-				url: base + url
-				type: 'put'
-				data: params
-		del: (url, params) =>
-			base = Materia.getOAuthdURL()
-			$.ajax
-				url: base + url
-				type: 'delete'
-				data: params
+		get: (url, params) => apiCall 'get', url, params
+		post: (url, params) => apiCall 'post', url, params
+		put: (url, params) => apiCall 'put', url, params
+		del: (url, params) => apiCall 'delete', url, params
 	}

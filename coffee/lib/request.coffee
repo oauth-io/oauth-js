@@ -1,8 +1,6 @@
 "use strict"
 
 Url = require('../tools/url')()
-Q = require('q')
-
 
 module.exports = (Materia, client_states, providers_api) ->
 	$ = Materia.getJquery()
@@ -12,7 +10,7 @@ module.exports = (Materia, client_states, providers_api) ->
 
 	fetched_methods = false
 	retrieveMethods: () ->
-		defer = Q.defer()
+		defer = $.Deferred()
 		if not fetched_methods
 			$.ajax(config.oauthd_url + '/api/extended-endpoints')
 				.then (data) ->
@@ -24,9 +22,7 @@ module.exports = (Materia, client_states, providers_api) ->
 					defer.reject(e)
 		else
 			defer.resolve extended_methods
-
-
-		defer.promise
+		return defer.promise()
 
 	generateMethods: (request_object, tokens, provider) ->
 		if extended_methods?

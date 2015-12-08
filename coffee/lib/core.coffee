@@ -9,10 +9,11 @@ cache = require("../tools/cache")
 
 module.exports = (window, document, jquery, navigator) ->
 	Url = Url(document)
-	cookies.init config, document
 	location_operations = Location document
+	storage = lstorage.active() && lstorage || cookies
 
-	cache.init cookies, lstorage, config
+	cookies.init config, document
+	cache.init storage, config
 
 	Materia =
 		initialize: (public_key, options) ->
@@ -41,7 +42,7 @@ module.exports = (window, document, jquery, navigator) ->
 		getJquery: () -> return jquery
 		getUrl: () -> return Url
 		getCache: () -> return cache
-		getCookies: () -> return cookies
+		getStorage: () -> return storage
 		getLocationOperations: () -> return location_operations
 
 	return Materia

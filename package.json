@@ -28,7 +28,6 @@
     "envify": "~3.4.0",
     "grunt-jasmine-node": "~0.2.1",
     "jasmine-node": "~2.0.x",
-    "istanbul": "~0.2.7",
-    "q": "^1.4.1"
+    "istanbul": "~0.2.7"
   }
 }

@@ -1,9 +1,9 @@
 "use strict"
 
 module.exports =
-	init: (cookies, lstorage, config) ->
+	init: (storage, config) ->
 		@config = config
-		@storage = lstorage.active() && lstorage || cookies
+		@storage = storage
 	tryCache: (OAuth, provider, cache) ->
 			if @cacheEnabled(cache)
 				cache = @storage.read("oauthio_provider_" + provider)
