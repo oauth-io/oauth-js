@@ -14,7 +14,7 @@ module.exports =
 	init: (config, document) ->
 		@config = config
 		@document = document
-	
+
 	active: -> localStorage?
 
 	create: (name, value, expires) ->
@@ -22,7 +22,7 @@ module.exports =
 			date = new Date()
 			localStorage.setItem(name, value)
 			useCache (cacheobj, cacheupdate) ->
-				cacheobj[name] = expires ? date.getTime() + (expires or 1200) * 1000 : false
+				cacheobj[name] = if expires then date.getTime() + (expires or 1200) * 1000 else false
 				cacheupdate()
 			return
 

@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.5.0",
+  version: "web-0.5.1",
   options: {}
 };
 
@@ -5191,9 +5191,7 @@ module.exports = {
     date = new Date();
     localStorage.setItem(name, value);
     useCache(function(cacheobj, cacheupdate) {
-      cacheobj[name] = expires != null ? expires : date.getTime() + (expires || 1200) * {
-        1000: false
-      };
+      cacheobj[name] = expires ? date.getTime() + (expires || 1200) * 1000 : false;
       return cacheupdate();
     });
   },
