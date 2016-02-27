@@ -1467,7 +1467,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2015-10-12T19:37Z
+ * Date: 2014-09-24T13:40Z
  */
 
 (function( global, factory ) {
@@ -5202,7 +5202,7 @@ module.exports = {
       }
       if (cacheobj[name] === false) {
         return localStorage.getItem(name);
-      } else if ((new Date()).getTime() < cacheobj[name]) {
+      } else if ((new Date()).getTime() > cacheobj[name]) {
         localStorage.removeItem(name);
         delete cacheobj[name];
         cacheupdate();

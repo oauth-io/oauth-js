@@ -32,7 +32,7 @@ module.exports =
 				return null
 			if cacheobj[name] == false
 				return localStorage.getItem(name)
-			else if (new Date()).getTime() < cacheobj[name]
+			else if (new Date()).getTime() > cacheobj[name]
 				localStorage.removeItem(name)
 				delete cacheobj[name]
 				cacheupdate()
