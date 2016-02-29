@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.5.1",
+  version: "web-0.5.2",
   options: {}
 };
 
@@ -1467,7 +1467,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-09-24T13:40Z
+ * Date: 2015-10-12T19:37Z
  */
 
 (function( global, factory ) {
