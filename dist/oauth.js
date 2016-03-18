@@ -13,14 +13,21 @@ module.exports = function(Materia) {
   $ = Materia.getJquery();
   apiCall = (function(_this) {
     return function(type, url, params) {
-      var base, defer;
+      var base, defer, opts;
       defer = $.Deferred();
       base = Materia.getOAuthdURL();
-      $.ajax({
+      opts = {
         url: base + url,
-        type: type,
-        data: params
-      }).then((function(data) {
+        type: type
+      };
+      if (type === 'post' || type === 'put') {
+        opts.dataType = "json";
+        opts.contentType = "application/json";
+        opts.data = JSON.stringify(params);
+      } else {
+        opts.data = params;
+      }
+      $.ajax(opts).then((function(data) {
         return defer.resolve(data);
       }), (function(err) {
         return defer.reject(err && err.responseJSON);
