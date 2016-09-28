@@ -2,20 +2,20 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.5.2",
+  version: "web-0.6.0",
   options: {}
 };
 
 },{}],2:[function(require,module,exports){
 "use strict";
-module.exports = function(Materia) {
+module.exports = function(OAuthio) {
   var $, apiCall;
-  $ = Materia.getJquery();
+  $ = OAuthio.getJquery();
   apiCall = (function(_this) {
     return function(type, url, params) {
       var base, defer, opts;
       defer = $.Deferred();
-      base = Materia.getOAuthdURL();
+      base = OAuthio.getOAuthdURL();
       opts = {
         url: base + url,
         type: type
@@ -76,13 +76,13 @@ lstorage = require("../tools/lstorage");
 cache = require("../tools/cache");
 
 module.exports = function(window, document, jquery, navigator) {
-  var Materia, location_operations, storage;
+  var OAuthio, location_operations, storage;
   Url = Url(document);
   location_operations = Location(document);
   storage = lstorage.active() && lstorage || cookies;
   cookies.init(config, document);
   cache.init(storage, config);
-  Materia = {
+  OAuthio = {
     initialize: function(public_key, options) {
       var i;
       config.key = public_key;
@@ -133,7 +133,7 @@ module.exports = function(window, document, jquery, navigator) {
       return location_operations;
     }
   };
-  return Materia;
+  return OAuthio;
 };
 
 },{"../config":1,"../tools/cache":9,"../tools/cookies":10,"../tools/location_operations":12,"../tools/lstorage":13,"../tools/url":15}],4:[function(require,module,exports){
@@ -146,15 +146,15 @@ oauthio_requests = require("./request");
 
 sha1 = require("../tools/sha1");
 
-module.exports = function(Materia) {
+module.exports = function(OAuthio) {
   var $, Url, cache, client_states, config, document, location_operations, oauth, oauth_result, oauthio, parse_urlfragment, providers_api, window;
-  Url = Materia.getUrl();
-  config = Materia.getConfig();
-  document = Materia.getDocument();
-  window = Materia.getWindow();
-  $ = Materia.getJquery();
-  cache = Materia.getCache();
-  providers_api = require('./providers')(Materia);
+  Url = OAuthio.getUrl();
+  config = OAuthio.getConfig();
+  document = OAuthio.getDocument();
+  window = OAuthio.getWindow();
+  $ = OAuthio.getJquery();
+  cache = OAuthio.getCache();
+  providers_api = require('./providers')(OAuthio);
   config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^\/]+/)[0];
   client_states = [];
   oauth_result = void 0;
@@ -171,13 +171,13 @@ module.exports = function(Materia) {
       }
     }
   })();
-  location_operations = Materia.getLocationOperations();
+  location_operations = OAuthio.getLocationOperations();
   oauthio = {
-    request: oauthio_requests(Materia, client_states, providers_api)
+    request: oauthio_requests(OAuthio, client_states, providers_api)
   };
   oauth = {
     initialize: function(public_key, options) {
-      return Materia.initialize(public_key, options);
+      return OAuthio.initialize(public_key, options);
     },
     setOAuthdURL: function(url) {
       config.oauthd_url = url;
@@ -525,7 +525,7 @@ module.exports = function(Materia) {
       }
     },
     getVersion: function() {
-      return Materia.getVersion.apply(this);
+      return OAuthio.getVersion.apply(this);
     }
   };
   return oauth;
@@ -537,9 +537,9 @@ var config;
 
 config = require("../config");
 
-module.exports = function(Materia) {
+module.exports = function(OAuthio) {
   var $, providers_api, providers_cb, providers_desc;
-  $ = Materia.getJquery();
+  $ = OAuthio.getJquery();
   providers_desc = {};
   providers_cb = {};
   providers_api = {
@@ -599,11 +599,11 @@ var Url,
 
 Url = require('../tools/url')();
 
-module.exports = function(Materia, client_states, providers_api) {
+module.exports = function(OAuthio, client_states, providers_api) {
   var $, cache, config, extended_methods, fetched_methods;
-  $ = Materia.getJquery();
-  config = Materia.getConfig();
-  cache = Materia.getCache();
+  $ = OAuthio.getJquery();
+  config = OAuthio.getConfig();
+  cache = OAuthio.getCache();
   extended_methods = [];
   fetched_methods = false;
   return {
@@ -1054,11 +1054,11 @@ module.exports = function(Materia, client_states, providers_api) {
 
 },{"../tools/url":15}],7:[function(require,module,exports){
 "use strict";
-module.exports = function(Materia) {
+module.exports = function(OAuthio) {
   var $, UserObject, config, lastSave, storage;
-  $ = Materia.getJquery();
-  config = Materia.getConfig();
-  storage = Materia.getStorage();
+  $ = OAuthio.getJquery();
+  config = OAuthio.getConfig();
+  storage = OAuthio.getStorage();
   lastSave = null;
   UserObject = (function() {
     function UserObject(data) {
@@ -1112,7 +1112,7 @@ module.exports = function(Materia) {
         }
       }
       this.saveLocal();
-      return Materia.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
+      return OAuthio.API.put('/api/usermanagement/user?k=' + config.key + '&token=' + this.token, dataToSave);
     };
 
     UserObject.prototype.select = function(provider) {
@@ -1140,7 +1140,7 @@ module.exports = function(Materia) {
     UserObject.prototype.getProviders = function() {
       var defer;
       defer = $.Deferred();
-      Materia.API.get('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token).done((function(_this) {
+      OAuthio.API.get('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token).done((function(_this) {
         return function(providers) {
           _this.providers = providers.data;
           _this.saveLocal();
@@ -1160,7 +1160,7 @@ module.exports = function(Materia) {
       }
       oauthRes.email = this.data.email;
       this.providers.push(oauthRes.provider);
-      Materia.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
+      OAuthio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
         return function(res) {
           _this.data = res.data;
           _this.saveLocal();
@@ -1179,7 +1179,7 @@ module.exports = function(Materia) {
       var defer;
       defer = $.Deferred();
       this.providers.splice(this.providers.indexOf(provider), 1);
-      Materia.API.del('/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + this.token).done((function(_this) {
+      OAuthio.API.del('/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + this.token).done((function(_this) {
         return function(res) {
           _this.saveLocal();
           return defer.resolve(res);
@@ -1194,24 +1194,24 @@ module.exports = function(Materia) {
     };
 
     UserObject.prototype.changePassword = function(oldPassword, newPassword) {
-      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
+      return OAuthio.API.post('/api/usermanagement/user/password?k=' + config.key + '&token=' + this.token, {
         password: newPassword
       });
     };
 
     UserObject.prototype.isLoggued = function() {
-      return Materia.User.isLogged();
+      return OAuthio.User.isLogged();
     };
 
     UserObject.prototype.isLogged = function() {
-      return Materia.User.isLogged();
+      return OAuthio.User.isLogged();
     };
 
     UserObject.prototype.logout = function() {
       var defer;
       defer = $.Deferred();
       storage.erase('oio_auth');
-      Materia.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
+      OAuthio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + this.token).done(function() {
         return defer.resolve();
       }).fail(function(err) {
         return defer.reject(err);
@@ -1224,10 +1224,10 @@ module.exports = function(Materia) {
   })();
   return {
     initialize: function(public_key, options) {
-      return Materia.initialize(public_key, options);
+      return OAuthio.initialize(public_key, options);
     },
     setOAuthdURL: function(url) {
-      return Materia.setOAuthdURL(url);
+      return OAuthio.setOAuthdURL(url);
     },
     signup: function(data) {
       var defer;
@@ -1235,7 +1235,7 @@ module.exports = function(Materia) {
       if (typeof data.toJson === 'function') {
         data = data.toJson();
       }
-      Materia.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
+      OAuthio.API.post('/api/usermanagement/signup?k=' + config.key, data).done(function(res) {
         storage.create('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
@@ -1251,14 +1251,14 @@ module.exports = function(Materia) {
         if (typeof signinData.toJson === 'function') {
           signinData = signinData.toJson();
         }
-        Materia.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
+        OAuthio.API.post('/api/usermanagement/signin?k=' + config.key, signinData).done(function(res) {
           storage.create('oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600);
           return defer.resolve(new UserObject(res.data));
         }).fail(function(err) {
           return defer.reject(err);
         });
       } else {
-        Materia.API.post('/api/usermanagement/signin?k=' + config.key, {
+        OAuthio.API.post('/api/usermanagement/signin?k=' + config.key, {
           email: email,
           password: password
         }).done(function(res) {
@@ -1271,20 +1271,20 @@ module.exports = function(Materia) {
       return defer.promise();
     },
     confirmResetPassword: function(newPassword, sptoken) {
-      return Materia.API.post('/api/usermanagement/user/password?k=' + config.key, {
+      return OAuthio.API.post('/api/usermanagement/user/password?k=' + config.key, {
         password: newPassword,
         token: sptoken
       });
     },
     resetPassword: function(email, callback) {
-      return Materia.API.post('/api/usermanagement/user/password/reset?k=' + config.key, {
+      return OAuthio.API.post('/api/usermanagement/user/password/reset?k=' + config.key, {
         email: email
       });
     },
     refreshIdentity: function() {
       var defer;
       defer = $.Deferred();
-      Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(storage.read('oio_auth')).token).done(function(res) {
+      OAuthio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(storage.read('oio_auth')).token).done(function(res) {
         return defer.resolve(new UserObject(res.data));
       }).fail(function(err) {
         return defer.reject(err);
@@ -1312,30 +1312,25 @@ module.exports = function(Materia) {
 
 },{}],8:[function(require,module,exports){
 (function() {
-  var Materia, jquery;
+  var OAuthio, jquery;
   jquery = require('./tools/jquery-lite.js');
-  Materia = require('./lib/core')(window, document, jquery, navigator);
-  Materia.extend('OAuth', require('./lib/oauth'));
-  Materia.extend('API', require('./lib/api'));
-  Materia.extend('User', require('./lib/user'));
+  OAuthio = require('./lib/core')(window, document, jquery, navigator);
+  OAuthio.extend('OAuth', require('./lib/oauth'));
+  OAuthio.extend('API', require('./lib/api'));
+  OAuthio.extend('User', require('./lib/user'));
   if (typeof angular !== "undefined" && angular !== null) {
-    angular.module('oauthio', []).factory('Materia', [
+    angular.module('oauthio', []).factory('OAuth', [
       function() {
-        return Materia;
-      }
-    ]).factory('OAuth', [
-      function() {
-        return Materia.OAuth;
+        return OAuthio.OAuth;
       }
     ]).factory('User', [
       function() {
-        return Materia.User;
+        return OAuthio.User;
       }
     ]);
   }
-  window.Materia = exports.Materia = Materia;
-  window.User = exports.User = exports.Materia.User;
-  window.OAuth = exports.OAuth = exports.Materia.OAuth;
+  window.User = exports.User = exports.OAuthio.User;
+  window.OAuth = exports.OAuth = exports.OAuthio.OAuth;
   if (typeof define === 'function' && define.amd) {
     define(function() {
       return exports;
