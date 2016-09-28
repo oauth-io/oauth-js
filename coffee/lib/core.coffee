@@ -15,7 +15,7 @@ module.exports = (window, document, jquery, navigator) ->
 	cookies.init config, document
 	cache.init storage, config
 
-	Materia =
+	OAuthio =
 		initialize: (public_key, options) ->
 			config.key = public_key
 			if options
@@ -45,4 +45,4 @@ module.exports = (window, document, jquery, navigator) ->
 		getStorage: () -> return storage
 		getLocationOperations: () -> return location_operations
 
-	return Materia
+	return OAuthio

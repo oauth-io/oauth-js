@@ -1,10 +1,10 @@
 "use strict"
 
-module.exports = (Materia) ->
-	$ = Materia.getJquery()
+module.exports = (OAuthio) ->
+	$ = OAuthio.getJquery()
 	apiCall = (type, url, params) =>
 		defer = $.Deferred()
-		base = Materia.getOAuthdURL()
+		base = OAuthio.getOAuthdURL()
 		opts = url: base + url, type: type
 		if type == 'post' or type == 'put'
 			opts.dataType = "json"

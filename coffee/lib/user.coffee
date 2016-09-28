@@ -1,9 +1,9 @@
 "use strict"
 
-module.exports = (Materia) ->
-	$ = Materia.getJquery()
-	config = Materia.getConfig()
-	storage = Materia.getStorage()
+module.exports = (OAuthio) ->
+	$ = OAuthio.getJquery()
+	config = OAuthio.getConfig()
+	storage = OAuthio.getStorage()
 
 	lastSave = null
 
@@ -39,7 +39,7 @@ module.exports = (Materia) ->
 				if !keyIsInLastSave d.key
 					dataToSave[d.key] = @data[d.key]
 			@saveLocal()
-			return Materia.API.put '/api/usermanagement/user?k=' + config.key + '&token=' + @token, dataToSave
+			return OAuthio.API.put '/api/usermanagement/user?k=' + config.key + '&token=' + @token, dataToSave
 
 		## todo select(provider)
 		select: (provider) ->
@@ -56,7 +56,7 @@ module.exports = (Materia) ->
 
 		getProviders: () ->
 			defer = $.Deferred()
-			Materia.API.get '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token
+			OAuthio.API.get '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token
 				.done (providers) =>
 					@providers = providers.data
 					@saveLocal()
@@ -70,7 +70,7 @@ module.exports = (Materia) ->
 			oauthRes = oauthRes.toJson() if typeof oauthRes.toJson == 'function'
 			oauthRes.email = @data.email
 			@providers.push oauthRes.provider
-			Materia.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
+			OAuthio.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
 				.done (res) =>
 					@data = res.data
 					@saveLocal()
@@ -83,7 +83,7 @@ module.exports = (Materia) ->
 		removeProvider: (provider) ->
 			defer = $.Deferred()
 			@providers.splice @providers.indexOf(provider), 1
-			Materia.API.del '/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + @token
+			OAuthio.API.del '/api/usermanagement/user/providers/' + provider + '?k=' + config.key + '&token=' + @token
 				.done (res) =>
 					@saveLocal()
 					defer.resolve res
@@ -94,22 +94,22 @@ module.exports = (Materia) ->
 
 		# todo - not working
 		changePassword: (oldPassword, newPassword) ->
-			return Materia.API.post '/api/usermanagement/user/password?k=' + config.key + '&token=' + @token,
+			return OAuthio.API.post '/api/usermanagement/user/password?k=' + config.key + '&token=' + @token,
 				password: newPassword
 				#oldPassword ?
 
 		#### 0.5.0 => remove this method
 		isLoggued: () ->
-			return Materia.User.isLogged()
+			return OAuthio.User.isLogged()
 		###########
 
 		isLogged: () ->
-			return Materia.User.isLogged()
+			return OAuthio.User.isLogged()
 
 		logout: () ->
 			defer = $.Deferred()
 			storage.erase 'oio_auth'
-			Materia.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + @token)
+			OAuthio.API.post('/api/usermanagement/user/logout?k=' + config.key + '&token=' + @token)
 				.done ->
 					defer.resolve()
 				.fail (err)->
@@ -117,12 +117,12 @@ module.exports = (Materia) ->
 
 			return defer.promise()
 	return {
-		initialize: (public_key, options) -> return Materia.initialize public_key, options
-		setOAuthdURL: (url) -> return Materia.setOAuthdURL url
+		initialize: (public_key, options) -> return OAuthio.initialize public_key, options
+		setOAuthdURL: (url) -> return OAuthio.setOAuthdURL url
 		signup: (data) ->
 			defer = $.Deferred()
 			data = data.toJson() if typeof data.toJson == 'function'
-			Materia.API.post '/api/usermanagement/signup?k=' + config.key, data
+			OAuthio.API.post '/api/usermanagement/signup?k=' + config.key, data
 				.done (res) ->
 					storage.create 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 					defer.resolve new UserObject(res.data)
@@ -137,7 +137,7 @@ module.exports = (Materia) ->
 				# signin(OAuthRes)
 				signinData = email
 				signinData = signinData.toJson() if typeof signinData.toJson == 'function'
-				Materia.API.post '/api/usermanagement/signin?k=' + config.key, signinData
+				OAuthio.API.post '/api/usermanagement/signin?k=' + config.key, signinData
 					.done (res) ->
 						storage.create 'oio_auth', JSON.stringify(res.data), res.data.expires_in || 21600
 						defer.resolve new UserObject(res.data)
@@ -145,7 +145,7 @@ module.exports = (Materia) ->
 						defer.reject err
 			else
 				# signin(email, password)
-				Materia.API.post('/api/usermanagement/signin?k=' + config.key,
+				OAuthio.API.post('/api/usermanagement/signin?k=' + config.key,
 					email: email
 					password: password
 				).done((res) ->
@@ -156,16 +156,16 @@ module.exports = (Materia) ->
 			return defer.promise()
 
 		confirmResetPassword: (newPassword, sptoken) ->
-			return Materia.API.post '/api/usermanagement/user/password?k=' + config.key,
+			return OAuthio.API.post '/api/usermanagement/user/password?k=' + config.key,
 				password: newPassword
 				token: sptoken
 
 		resetPassword: (email, callback) ->
-			Materia.API.post '/api/usermanagement/user/password/reset?k=' + config.key, email: email
+			OAuthio.API.post '/api/usermanagement/user/password/reset?k=' + config.key, email: email
 
 		refreshIdentity: () ->
 			defer = $.Deferred()
-			Materia.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(storage.read('oio_auth')).token)
+			OAuthio.API.get('/api/usermanagement/user?k=' + config.key + '&token=' + JSON.parse(storage.read('oio_auth')).token)
 				.done (res) ->
 					defer.resolve new UserObject(res.data)
 				.fail (err) ->

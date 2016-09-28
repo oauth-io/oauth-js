@@ -2,10 +2,10 @@
 
 Url = require('../tools/url')()
 
-module.exports = (Materia, client_states, providers_api) ->
-	$ = Materia.getJquery()
-	config = Materia.getConfig()
-	cache = Materia.getCache()
+module.exports = (OAuthio, client_states, providers_api) ->
+	$ = OAuthio.getJquery()
+	config = OAuthio.getConfig()
+	cache = OAuthio.getCache()
 	extended_methods = []
 
 	fetched_methods = false

@@ -1,26 +1,22 @@
 do ->
 	jquery = require('./tools/jquery-lite.js')
 
-	Materia = require('./lib/core') window, document, jquery, navigator
-	Materia.extend 'OAuth', require('./lib/oauth')
-	Materia.extend 'API', require('./lib/api')
-	Materia.extend 'User', require('./lib/user')
+	OAuthio = require('./lib/core') window, document, jquery, navigator
+	OAuthio.extend 'OAuth', require('./lib/oauth')
+	OAuthio.extend 'API', require('./lib/api')
+	OAuthio.extend 'User', require('./lib/user')
 
 	if angular?
 		angular.module 'oauthio', []
-			.factory 'Materia', [() ->
-				return Materia
-			]
 			.factory 'OAuth', [() ->
-				return Materia.OAuth
+				return OAuthio.OAuth
 			]
 			.factory 'User', [() ->
-				return Materia.User
+				return OAuthio.User
 			]
 
-	window.Materia = exports.Materia = Materia
-	window.User = exports.User = exports.Materia.User
-	window.OAuth = exports.OAuth = exports.Materia.OAuth
+	window.User = exports.User = exports.OAuthio.User
+	window.OAuth = exports.OAuth = exports.OAuthio.OAuth
 
 	if (typeof define == 'function' && define.amd)
 		define -> exports

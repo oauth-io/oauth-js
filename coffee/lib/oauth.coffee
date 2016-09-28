@@ -4,15 +4,15 @@ cookies = require("../tools/cookies")
 oauthio_requests = require("./request")
 sha1 = require("../tools/sha1")
 
-module.exports = (Materia) ->
-	Url = Materia.getUrl()
-	config = Materia.getConfig()
-	document = Materia.getDocument()
-	window = Materia.getWindow()
-	$ = Materia.getJquery()
-	cache = Materia.getCache()
+module.exports = (OAuthio) ->
+	Url = OAuthio.getUrl()
+	config = OAuthio.getConfig()
+	document = OAuthio.getDocument()
+	window = OAuthio.getWindow()
+	$ = OAuthio.getJquery()
+	cache = OAuthio.getCache()
 
-	providers_api = require('./providers') Materia
+	providers_api = require('./providers') OAuthio
 
 	config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0]
 
@@ -31,11 +31,11 @@ module.exports = (Materia) ->
 		return
 	)()
 
-	location_operations = Materia.getLocationOperations()
-	oauthio = request: oauthio_requests(Materia, client_states, providers_api)
+	location_operations = OAuthio.getLocationOperations()
+	oauthio = request: oauthio_requests(OAuthio, client_states, providers_api)
 
 	oauth = {
-		initialize: (public_key, options) -> return Materia.initialize public_key, options
+		initialize: (public_key, options) -> return OAuthio.initialize public_key, options
 		setOAuthdURL: (url) ->
 			config.oauthd_url = url
 			config.oauthd_base = Url.getAbsUrl(config.oauthd_url).match(/^.{2,5}:\/\/[^/]+/)[0]
@@ -226,7 +226,7 @@ module.exports = (Materia) ->
 				data = JSON.parse(oauth_result)
 			catch e
 				return false
-			
+
 			if provider
 				return data.provider.toLowerCase() is provider.toLowerCase()
 			return data.provider
@@ -280,6 +280,6 @@ module.exports = (Materia) ->
 			oauthio.request.http opts  if oauthio.request.http
 			return
 		getVersion: () ->
-			Materia.getVersion.apply this
+			OAuthio.getVersion.apply this
 	}
 	return oauth
