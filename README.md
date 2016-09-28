@@ -282,7 +282,7 @@ Then you can run the testsuite from the SDK root directory :
 $ jasmine-node --verbose tests/unit/spec
 ```
 
-Once you've isntalled `istanbul`, you can run the following command to get coverage information :
+Once you've installed `istanbul`, you can run the following command to get coverage information :
 
 ```sh
 $ npm test
