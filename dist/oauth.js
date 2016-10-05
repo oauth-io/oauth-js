@@ -2,7 +2,7 @@
 module.exports = {
   oauthd_url: "https://oauth.io",
   oauthd_api: "https://oauth.io/api",
-  version: "web-0.6.0",
+  version: "web-0.6.1",
   options: {}
 };
 
@@ -1329,6 +1329,7 @@ module.exports = function(OAuthio) {
       }
     ]);
   }
+  exports.OAuthio = OAuthio;
   window.User = exports.User = exports.OAuthio.User;
   window.OAuth = exports.OAuth = exports.OAuthio.OAuth;
   if (typeof define === 'function' && define.amd) {
@@ -1469,7 +1470,7 @@ module.exports = {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2015-10-12T19:37Z
+ * Date: 2014-09-24T13:40Z
  */
 
 (function( global, factory ) {

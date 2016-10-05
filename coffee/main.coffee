@@ -15,6 +15,7 @@ do ->
 				return OAuthio.User
 			]
 
+	exports.OAuthio = OAuthio
 	window.User = exports.User = exports.OAuthio.User
 	window.OAuth = exports.OAuth = exports.OAuthio.OAuth
 
