@@ -18,7 +18,7 @@ $(function() {
 			"<span style=\"color: #777\">// after being authorized</span>\n" +
 			"OAuth.redirect('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', '<strong>callback_url</strong>');\n\n" +
 			"<span style=\"color: #777\">// In callback URL</span>\n" +
-			"OAuth.callback('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', (<span style=\"color: red; font-weight: bold\">error</span>, <span style=\"color: orange; font-weight: bold\">success</span>) { \n" +
+			"OAuth.callback('<span class=\"provider\" style=\"color: #428bca; font-weight: bold\">" + provider + "</span>', function(<span style=\"color: red; font-weight: bold\">error</span>, <span style=\"color: orange; font-weight: bold\">success</span>) { \n" +
 			"  <span style=\"color: #777\">// See the result below</span>\n" +
 			"});";
 
