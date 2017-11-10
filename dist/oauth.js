@@ -1133,8 +1133,7 @@ module.exports = function(OAuthio) {
     };
 
     UserObject.prototype.hasProvider = function(provider) {
-      var ref;
-      return ((ref = this.providers) != null ? ref.indexOf(provider) : void 0) !== -1;
+      return !!this.providers && this.providers.indexOf(provider) !== -1;
     };
 
     UserObject.prototype.getProviders = function() {
@@ -1159,6 +1158,9 @@ module.exports = function(OAuthio) {
         oauthRes = oauthRes.toJson();
       }
       oauthRes.email = this.data.email;
+      if (!this.providers) {
+        this.providers = [];
+      }
       this.providers.push(oauthRes.provider);
       OAuthio.API.post('/api/usermanagement/user/providers?k=' + config.key + '&token=' + this.token, oauthRes).done((function(_this) {
         return function(res) {

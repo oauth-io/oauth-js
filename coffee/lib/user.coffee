@@ -52,7 +52,7 @@ module.exports = (OAuthio) ->
 			storage.create 'oio_auth', JSON.stringify(copy), 21600
 
 		hasProvider: (provider) ->
-			return @providers?.indexOf(provider) != -1
+			return !! @providers and @providers.indexOf(provider) != -1
 
 		getProviders: () ->
 			defer = $.Deferred()
@@ -69,6 +69,7 @@ module.exports = (OAuthio) ->
 			defer = $.Deferred()
 			oauthRes = oauthRes.toJson() if typeof oauthRes.toJson == 'function'
 			oauthRes.email = @data.email
+			@providers = [] if not @providers
 			@providers.push oauthRes.provider
 			OAuthio.API.post '/api/usermanagement/user/providers?k=' + config.key + '&token=' + @token, oauthRes
 				.done (res) =>
