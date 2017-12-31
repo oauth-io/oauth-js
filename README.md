@@ -73,14 +73,15 @@ OAuth.redirect('facebook', "callback/url");
 In callback url :
 
  ```javascript
-OAuth.callback('facebook')
-.done(function(result) {
-    //use result.access_token in your API request
-    //or use result.get|post|put|del|patch|me methods (see below)
-})
-.fail(function (err) {
-    //handle error with err
-});
+function user_callback(err, result) {
+    if(err) {
+        // handle error with err
+    } else {
+        //use result.access_token in your API request
+        //or use result.get|post|put|del|patch|me methods (see below)
+    }
+}
+OAuth.callback('facebook', user_callback);
  ```
 
 Making requests
